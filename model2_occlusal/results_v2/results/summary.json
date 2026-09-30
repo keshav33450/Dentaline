@@ -1,0 +1,29 @@
+{
+  "source": "/kaggle/working/data/public_raw",
+  "classes": {
+    "-0-Sound-Tooth-Structure": "no_caries",
+    "-1-Faint-Visual-Change-in-Enamel": "mild",
+    "-2-Distinct-Visual-Change-in-Enamel": "mild",
+    "-3-Localized-Enamel-Breakdown": "moderate",
+    "-4-Dark-Dentinal-Shadow": "moderate",
+    "-5-Distinct-Cavity": "advanced",
+    "-6-Extensive-Distinct-Cavity": "advanced"
+  },
+  "photos": 1882,
+  "regions": 22824,
+  "severity": {
+    "no_caries": 14562,
+    "mild": 3211,
+    "moderate": 2103,
+    "advanced": 2948
+  },
+  "skipped_classes": {},
+  "folds": {
+    "0": 4543,
+    "1": 4547,
+    "2": 4619,
+    "3": 4654,
+    "4": 4461
+  },
+  "mode": "public"
+}

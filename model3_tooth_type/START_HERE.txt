@@ -1,0 +1,21 @@
+MODEL 3 - TOOTH TYPE (intraoral photo)     TRAINED 29-09-2026 on Kaggle (YOLO11s)
+================================================================================
+Detects each tooth one by one and labels it:  incisor / canine / premolar / molar
+Test results (107 unseen photos)  ->  results\metrics.json
+   Overall  mAP50 99.1   mAP50-95 84.5
+      incisor 99.5   canine 99.5   premolar 99.5   molar 98.1
+
+weights\
+   best.pt   local YOLO11 model - runs fully OFFLINE (default backend)
+   best.onnx same model in ONNX
+
+USE IT ON THIS PC
+   1. Install Python 3.10-3.12 (python.org, tick "Add to PATH")
+   2. Double-click  code\windows\setup.bat
+   3. Drag an intraoral photo onto  code\windows\analyze_image.bat
+        -> tooth_types.jpg + result.json  in  test_images\results
+      or analyse everything in test_images\ at once:  ANALYZE_TEST_IMAGES.bat
+   4. API for the web app:  code\windows\run_api.bat  ->  http://localhost:8003/health
+
+RETRAIN: notebooks\train_model3_kaggle.ipynb on Kaggle (GPU T4 x2, Internet On, Save & Run All).
+Data licence: Dental_Dataset_Level2 CC BY 4.0.  Research prototype - not a diagnosis.

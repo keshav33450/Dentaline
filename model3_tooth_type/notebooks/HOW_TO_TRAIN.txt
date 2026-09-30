@@ -1,0 +1,12 @@
+GET best.pt FOR MODEL 3  (Kaggle GPU, ~30-60 min)
+=================================================
+1. Kaggle.com -> Datasets -> New Dataset -> upload  Dental_Dataset_Level2_v1i_yolov11.zip
+   (name it e.g. "dental-tooth-type"). Wait until it finishes processing.
+2. Kaggle -> Code -> New Notebook -> File -> Upload Notebook -> train_model3_kaggle.ipynb
+3. Right panel: Add Input -> your "dental-tooth-type" dataset.
+   Settings: Accelerator = GPU T4 x2, Internet = On.
+   (Leave USE_ROBOFLOW = False in cell 0 - it auto-finds the dataset's data.yaml.)
+4. Save & Run All.  When done: Output tab -> download  model3_toothtype_outputs.zip
+5. Send that zip to Claude -> it unpacks best.pt + best.onnx into weights\ and wires it up.
+
+Alternative (no upload): set Kaggle Secret ROBOFLOW_API_KEY and flip USE_ROBOFLOW=True in cell 0.

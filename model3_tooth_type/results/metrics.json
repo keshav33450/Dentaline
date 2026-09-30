@@ -1,0 +1,31 @@
+{
+  "model": "yolo11s.pt",
+  "test": {
+    "map50": 0.9914,
+    "map50_95": 0.8454,
+    "perClass": {
+      "canine": {
+        "map50": 0.9949,
+        "map50_95": 0.8838
+      },
+      "incisor": {
+        "map50": 0.995,
+        "map50_95": 0.9525
+      },
+      "molar": {
+        "map50": 0.9808,
+        "map50_95": 0.6891
+      },
+      "premolar": {
+        "map50": 0.995,
+        "map50_95": 0.8563
+      }
+    }
+  },
+  "classes": [
+    "canine",
+    "incisor",
+    "molar",
+    "premolar"
+  ]
+}

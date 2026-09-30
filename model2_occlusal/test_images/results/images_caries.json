@@ -1,0 +1,88 @@
+{
+ "quality": {
+  "ok": true,
+  "reasons": [],
+  "metrics": {
+   "blur_laplacian_var": 109.9,
+   "mean_luminance": 101.9,
+   "clipped_fraction": 0.0,
+   "specular_fraction": 0.0
+  }
+ },
+ "teeth_found": 5,
+ "caries": [
+  {
+   "severity": "moderate",
+   "box": [
+    149.9,
+    246.8,
+    325.2,
+    391.7
+   ],
+   "confidence": 0.945,
+   "status": "likely",
+   "display": "Moderate caries - 94%"
+  },
+  {
+   "severity": "moderate",
+   "box": [
+    282.2,
+    46.2,
+    433.6,
+    188.9
+   ],
+   "confidence": 0.823,
+   "status": "likely",
+   "display": "Moderate caries - 82%"
+  },
+  {
+   "severity": "moderate",
+   "box": [
+    217.8,
+    157.1,
+    390.6,
+    297.2
+   ],
+   "confidence": 0.401,
+   "status": "possible",
+   "display": "Possible moderate caries - 40% (needs review)"
+  },
+  {
+   "severity": "mild",
+   "box": [
+    105.2,
+    425.4,
+    231.2,
+    523.0
+   ],
+   "confidence": 0.504,
+   "status": "likely",
+   "display": "Mild caries - 50%"
+  },
+  {
+   "severity": "mild",
+   "box": [
+    132.9,
+    350.9,
+    259.2,
+    456.7
+   ],
+   "confidence": 0.452,
+   "status": "possible",
+   "display": "Possible mild caries - 45% (needs review)"
+  }
+ ],
+ "sound_teeth": [],
+ "summary": {
+  "no_caries": 0,
+  "mild": 2,
+  "moderate": 3,
+  "advanced": 0
+ },
+ "highest": "Moderate caries - 94%",
+ "settings": {
+  "hidden_below": 0.3,
+  "likely_from": 0.5
+ },
+ "disclaimer": "AI screening aid - not a diagnosis. Confirm clinically (ICDAS)."
+}

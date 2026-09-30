@@ -1,0 +1,149 @@
+{
+ "quality": {
+  "ok": true,
+  "reasons": [],
+  "metrics": {
+   "blur_laplacian_var": 1054.3,
+   "mean_luminance": 121.6,
+   "clipped_fraction": 0.002,
+   "specular_fraction": 0.0118
+  }
+ },
+ "teeth_found": 10,
+ "caries": [
+  {
+   "severity": "advanced",
+   "box": [
+    3.4,
+    0.0,
+    58.9,
+    61.3
+   ],
+   "confidence": 0.864,
+   "status": "likely",
+   "display": "Advanced caries - 86%"
+  },
+  {
+   "severity": "moderate",
+   "box": [
+    205.9,
+    2.3,
+    249.0,
+    54.2
+   ],
+   "confidence": 0.719,
+   "status": "likely",
+   "display": "Moderate caries - 72%"
+  }
+ ],
+ "sound_teeth": [
+  {
+   "severity": "no_caries",
+   "box": [
+    62.9,
+    126.1,
+    88.1,
+    158.6
+   ],
+   "confidence": 0.803,
+   "status": "likely",
+   "display": "No caries - 80%"
+  },
+  {
+   "severity": "no_caries",
+   "box": [
+    85.4,
+    135.6,
+    114.1,
+    164.6
+   ],
+   "confidence": 0.749,
+   "status": "likely",
+   "display": "No caries - 75%"
+  },
+  {
+   "severity": "no_caries",
+   "box": [
+    108.7,
+    140.5,
+    136.3,
+    170.0
+   ],
+   "confidence": 0.729,
+   "status": "likely",
+   "display": "No caries - 73%"
+  },
+  {
+   "severity": "no_caries",
+   "box": [
+    38.1,
+    99.6,
+    73.7,
+    135.2
+   ],
+   "confidence": 0.71,
+   "status": "likely",
+   "display": "No caries - 71%"
+  },
+  {
+   "severity": "no_caries",
+   "box": [
+    135.0,
+    140.8,
+    161.5,
+    170.4
+   ],
+   "confidence": 0.678,
+   "status": "likely",
+   "display": "No caries - 68%"
+  },
+  {
+   "severity": "no_caries",
+   "box": [
+    19.6,
+    55.4,
+    67.0,
+    106.6
+   ],
+   "confidence": 0.641,
+   "status": "likely",
+   "display": "No caries - 64%"
+  },
+  {
+   "severity": "no_caries",
+   "box": [
+    198.4,
+    96.2,
+    233.9,
+    131.2
+   ],
+   "confidence": 0.592,
+   "status": "likely",
+   "display": "No caries - 59%"
+  },
+  {
+   "severity": "no_caries",
+   "box": [
+    203.3,
+    49.3,
+    249.0,
+    100.4
+   ],
+   "confidence": 0.425,
+   "status": "possible",
+   "display": "Possible no caries - 42% (needs review)"
+  }
+ ],
+ "summary": {
+  "no_caries": 8,
+  "mild": 0,
+  "moderate": 1,
+  "advanced": 1
+ },
+ "highest": "Advanced caries - 86%",
+ "settings": {
+  "hidden_below": 0.3,
+  "likely_from": 0.5
+ },
+ "disclaimer": "AI screening aid - not a diagnosis. Confirm clinically (ICDAS)."
+}

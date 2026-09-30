@@ -1,0 +1,23 @@
+# External validation - Zenodo smartphone photos (different country, camera, labelling team)
+
+Test photos: 35, reference lesions: 125. Hit = prediction covers >= 30% of the dentist's box.
+
+## A_severity_detector_roboflow
+
+| Metric | Value |
+|---|---|
+| photos | 35 |
+| lesions | 125 |
+| lesion_sensitivity | 1.0 |
+| photo_sensitivity | 1.0 |
+| photo_specificity | None |
+| predictions | 435 |
+| share_of_predictions_on_a_lesion | 0.4391 |
+| photo_confusion | {'TP': 35, 'FN': 0, 'FP': 0, 'TN': 0} |
+
+## C_zenodo_caries_detector_internal_test
+
+- mAP50: 0.8244
+- precision: 0.8214
+- recall: 0.736
+

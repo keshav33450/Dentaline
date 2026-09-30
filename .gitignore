@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# large model weights (host separately or via Git LFS / releases)
+*.pt
+*.onnx
+*_openvino_model/
+
+# datasets & archives
+*.zip
+dental_tooth_type.zip
+study_data/
+test_images/results/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# outputs
+outputs/
+runs/

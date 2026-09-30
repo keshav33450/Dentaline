@@ -1,0 +1,42 @@
+MODEL 2 - SMARTPHONE OCCLUSAL CARIES (permanent premolars & molars)
+====================================================================
+One Kaggle notebook trains 4 parts:
+
+ PART                              DATA (public)                                     OUTPUT (weights\)
+ 1 Caries severity                 Roboflow "Caries Classification ICDAS II"         occlusal_severity.pt
+   No Caries/Mild/Moderate/Adv.    ICDAS 0 | 1-2 | 3-4 | 5-6                         occlusal_det.pt
+ 2 Caries screening (phone)        Zenodo 14769743, 6,313 smartphone photos          occlusal_caries_det.pt
+ 3 Tooth outline + premolar/molar  SegmentAnyTooth auto-labels the Zenodo photos     occlusal_toothseg.pt, occlusal_type.pt
+ 4 External validation             Zenodo held-out photos (other country/camera)     results\EXTERNAL_VALIDATION.md
+
+---------------------------------------------------------------------
+ONE-TIME PREPARATION
+ a) Roboflow key (part 1):  roboflow.com -> Settings -> API Keys
+    Kaggle notebook -> Add-ons -> Secrets -> ROBOFLOW_API_KEY  (switch ON)
+ b) SegmentAnyTooth weights (part 3) - free for research, by e-mail:
+    1. Open https://github.com/thangngoc89/SegmentAnyTooth -> download SegmentAnyTooth_license_agreement.pdf
+    2. Sign it, e-mail to  hi+segmentanytooth@khoanguyen.me  -> you get a download link (a few days)
+    3. Kaggle -> Datasets -> New Dataset -> upload the weight files
+       (segmentanytooth_vit_tiny.pt, segmentanytooth_yolo11_upper.pt, segmentanytooth_yolo11_lower.pt, ...)
+       keep it PRIVATE (licence: non-commercial research)
+    Without these weights parts 1, 2 and 4 still run; part 3 is skipped automatically.
+
+RUN
+ 1. Kaggle -> File -> Import Notebook -> model2_occlusal\train_model2_v2_kaggle.ipynb
+ 2. Add Data -> your SegmentAnyTooth weights dataset (if you have it)
+    Optional: Add Data -> a dataset with your earlier model2 weights (occlusal_severity.pt ...)
+              -> severity is NOT retrained (saves ~1.5 h)
+ 3. GPU T4 x2, Internet ON -> Save Version -> Save & Run All   (~3-5 h)
+ 4. Output tab -> model2_outputs.zip -> save in model2_occlusal\archive\ (as model2_v2_outputs.zip)  -> tell Claude "saved"
+
+STUDY DATA (KGMU, later)
+ Same notebook: attach the study dataset (photos + CVAT json with fdi + clinical_icdas.xlsx)
+ -> STUDY mode trains on your own photos with the proforma statistics.
+ See templates\ for the ICDAS and SUS sheets.
+
+Licences: Roboflow ICDAS II CC BY 4.0 | Zenodo dataset CC BY 4.0 (v2) |
+          SegmentAnyTooth code MIT, weights non-commercial research only.
+
+VERSIONS
+  v1 (27-09-2026, done)  severity only, Roboflow ICDAS II  -> archive\model2_v1_outputs.zip, weights\, results\
+  v2 (next)              + Zenodo phone-caries detector + external validation (+ premolar/molar with SegmentAnyTooth)

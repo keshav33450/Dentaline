@@ -1,0 +1,36 @@
+{
+  "teeth": {
+    "onnx": "/kaggle/working/weights/teeth.onnx",
+    "onnx_mb": 38.2,
+    "cpu_pt": {
+      "mean_ms": 210.0,
+      "p95_ms": 213.2
+    },
+    "cpu_onnx": {
+      "mean_ms": 372.1,
+      "p95_ms": 408.6
+    },
+    "openvino_int8": "/kaggle/working/weights/teeth_int8_openvino_model",
+    "cpu_openvino_int8": {
+      "mean_ms": 246.1,
+      "p95_ms": 266.6
+    }
+  },
+  "findings": {
+    "onnx": "/kaggle/working/weights/findings.onnx",
+    "onnx_mb": 80.9,
+    "cpu_pt": {
+      "mean_ms": 1022.9,
+      "p95_ms": 1060.0
+    },
+    "cpu_onnx": {
+      "mean_ms": 1516.1,
+      "p95_ms": 1647.9
+    },
+    "openvino_int8": "/kaggle/working/weights/findings_int8_openvino_model",
+    "cpu_openvino_int8": {
+      "mean_ms": 964.9,
+      "p95_ms": 1003.2
+    }
+  }
+}

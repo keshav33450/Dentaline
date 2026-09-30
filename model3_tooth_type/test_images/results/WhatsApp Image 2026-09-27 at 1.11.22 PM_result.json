@@ -1,0 +1,73 @@
+{
+ "backend": "weights",
+ "n_teeth": 6,
+ "counts": {
+  "incisor": 1,
+  "canine": 2,
+  "premolar": 1,
+  "molar": 2
+ },
+ "teeth": [
+  {
+   "type": "molar",
+   "confidence": 0.878,
+   "bbox": [
+    175.8,
+    543.3,
+    363.4,
+    842.7
+   ]
+  },
+  {
+   "type": "canine",
+   "confidence": 0.846,
+   "bbox": [
+    351.6,
+    272.0,
+    422.2,
+    374.4
+   ]
+  },
+  {
+   "type": "incisor",
+   "confidence": 0.869,
+   "bbox": [
+    409.3,
+    277.6,
+    777.1,
+    435.4
+   ]
+  },
+  {
+   "type": "canine",
+   "confidence": 0.448,
+   "bbox": [
+    699.3,
+    326.6,
+    778.4,
+    434.1
+   ]
+  },
+  {
+   "type": "premolar",
+   "confidence": 0.895,
+   "bbox": [
+    726.6,
+    413.4,
+    864.6,
+    618.5
+   ]
+  },
+  {
+   "type": "molar",
+   "confidence": 0.849,
+   "bbox": [
+    767.3,
+    605.6,
+    916.5,
+    891.1
+   ]
+  }
+ ],
+ "disclaimer": "Research prototype - not a diagnostic system."
+}

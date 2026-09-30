@@ -1,0 +1,1158 @@
+{
+ "image": {
+  "width": 630,
+  "height": 333
+ },
+ "teeth": [
+  {
+   "fdi": "11",
+   "box": [
+    298.9,
+    111.7,
+    322.8,
+    196.9
+   ],
+   "confidence": 0.735,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "11",
+   "quadrant": 1,
+   "position": 1,
+   "type": "central incisor",
+   "side": "upper right",
+   "group": "incisor"
+  },
+  {
+   "fdi": "12",
+   "box": [
+    281.0,
+    108.4,
+    307.2,
+    194.4
+   ],
+   "confidence": 0.812,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "12",
+   "quadrant": 1,
+   "position": 2,
+   "type": "lateral incisor",
+   "side": "upper right",
+   "group": "incisor"
+  },
+  {
+   "fdi": "13",
+   "box": [
+    259.9,
+    100.0,
+    289.2,
+    192.3
+   ],
+   "confidence": 0.699,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "13",
+   "quadrant": 1,
+   "position": 3,
+   "type": "canine",
+   "side": "upper right",
+   "group": "canine"
+  },
+  {
+   "fdi": "14",
+   "box": [
+    240.8,
+    105.5,
+    269.6,
+    186.8
+   ],
+   "confidence": 0.537,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "14",
+   "quadrant": 1,
+   "position": 4,
+   "type": "first premolar",
+   "side": "upper right",
+   "group": "premolar"
+  },
+  {
+   "fdi": "15",
+   "box": [
+    221.9,
+    105.0,
+    249.4,
+    181.1
+   ],
+   "confidence": 0.839,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "15",
+   "quadrant": 1,
+   "position": 5,
+   "type": "second premolar",
+   "side": "upper right",
+   "group": "premolar"
+  },
+  {
+   "fdi": "16",
+   "box": [
+    192.9,
+    101.6,
+    230.6,
+    179.8
+   ],
+   "confidence": 0.789,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "16",
+   "quadrant": 1,
+   "position": 6,
+   "type": "first molar",
+   "side": "upper right",
+   "group": "molar"
+  },
+  {
+   "fdi": "17",
+   "box": [
+    164.9,
+    102.6,
+    209.2,
+    170.8
+   ],
+   "confidence": 0.749,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "17",
+   "quadrant": 1,
+   "position": 7,
+   "type": "second molar",
+   "side": "upper right",
+   "group": "molar"
+  },
+  {
+   "fdi": "18",
+   "box": [
+    151.7,
+    97.3,
+    195.0,
+    135.4
+   ],
+   "confidence": 0.666,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "18",
+   "quadrant": 1,
+   "position": 8,
+   "type": "third molar",
+   "side": "upper right",
+   "group": "molar"
+  },
+  {
+   "fdi": "21",
+   "box": [
+    319.3,
+    111.2,
+    344.1,
+    196.6
+   ],
+   "confidence": 0.77,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "21",
+   "quadrant": 2,
+   "position": 1,
+   "type": "central incisor",
+   "side": "upper left",
+   "group": "incisor"
+  },
+  {
+   "fdi": "22",
+   "box": [
+    339.2,
+    116.3,
+    359.3,
+    193.9
+   ],
+   "confidence": 0.853,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "22",
+   "quadrant": 2,
+   "position": 2,
+   "type": "lateral incisor",
+   "side": "upper left",
+   "group": "incisor"
+  },
+  {
+   "fdi": "23",
+   "box": [
+    355.5,
+    106.9,
+    379.2,
+    193.5
+   ],
+   "confidence": 0.765,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "23",
+   "quadrant": 2,
+   "position": 3,
+   "type": "canine",
+   "side": "upper left",
+   "group": "canine"
+  },
+  {
+   "fdi": "24",
+   "box": [
+    370.6,
+    110.2,
+    397.9,
+    188.4
+   ],
+   "confidence": 0.847,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "24",
+   "quadrant": 2,
+   "position": 4,
+   "type": "first premolar",
+   "side": "upper left",
+   "group": "premolar"
+  },
+  {
+   "fdi": "25",
+   "box": [
+    388.7,
+    112.2,
+    416.3,
+    185.9
+   ],
+   "confidence": 0.648,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "25",
+   "quadrant": 2,
+   "position": 5,
+   "type": "second premolar",
+   "side": "upper left",
+   "group": "premolar"
+  },
+  {
+   "fdi": "26",
+   "box": [
+    409.8,
+    105.0,
+    445.0,
+    182.5
+   ],
+   "confidence": 0.806,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "26",
+   "quadrant": 2,
+   "position": 6,
+   "type": "first molar",
+   "side": "upper left",
+   "group": "molar"
+  },
+  {
+   "fdi": "27",
+   "box": [
+    434.8,
+    107.7,
+    472.6,
+    176.5
+   ],
+   "confidence": 0.899,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "27",
+   "quadrant": 2,
+   "position": 7,
+   "type": "second molar",
+   "side": "upper left",
+   "group": "molar"
+  },
+  {
+   "fdi": "28",
+   "box": [
+    446.4,
+    102.1,
+    485.9,
+    142.5
+   ],
+   "confidence": 0.682,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "28",
+   "quadrant": 2,
+   "position": 8,
+   "type": "third molar",
+   "side": "upper left",
+   "group": "molar"
+  },
+  {
+   "fdi": "31",
+   "box": [
+    320.2,
+    198.7,
+    338.2,
+    265.2
+   ],
+   "confidence": 0.745,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "31",
+   "quadrant": 3,
+   "position": 1,
+   "type": "central incisor",
+   "side": "lower left",
+   "group": "incisor"
+  },
+  {
+   "fdi": "32",
+   "box": [
+    332.0,
+    195.9,
+    353.2,
+    265.9
+   ],
+   "confidence": 0.853,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "32",
+   "quadrant": 3,
+   "position": 2,
+   "type": "lateral incisor",
+   "side": "lower left",
+   "group": "incisor"
+  },
+  {
+   "fdi": "33",
+   "box": [
+    348.6,
+    196.8,
+    372.2,
+    273.1
+   ],
+   "confidence": 0.852,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "33",
+   "quadrant": 3,
+   "position": 3,
+   "type": "canine",
+   "side": "lower left",
+   "group": "canine"
+  },
+  {
+   "fdi": "34",
+   "box": [
+    366.9,
+    198.8,
+    393.9,
+    270.9
+   ],
+   "confidence": 0.79,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "34",
+   "quadrant": 3,
+   "position": 4,
+   "type": "first premolar",
+   "side": "lower left",
+   "group": "premolar"
+  },
+  {
+   "fdi": "35",
+   "box": [
+    384.6,
+    195.2,
+    426.7,
+    267.0
+   ],
+   "confidence": 0.862,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "35",
+   "quadrant": 3,
+   "position": 5,
+   "type": "second premolar",
+   "side": "lower left",
+   "group": "premolar"
+  },
+  {
+   "fdi": "36",
+   "box": [
+    401.0,
+    187.3,
+    465.6,
+    260.0
+   ],
+   "confidence": 0.919,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "36",
+   "quadrant": 3,
+   "position": 6,
+   "type": "first molar",
+   "side": "lower left",
+   "group": "molar"
+  },
+  {
+   "fdi": "37",
+   "box": [
+    437.5,
+    178.4,
+    494.9,
+    245.1
+   ],
+   "confidence": 0.906,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "37",
+   "quadrant": 3,
+   "position": 7,
+   "type": "second molar",
+   "side": "lower left",
+   "group": "molar"
+  },
+  {
+   "fdi": "38",
+   "box": [
+    472.5,
+    173.0,
+    514.7,
+    215.6
+   ],
+   "confidence": 0.738,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "38",
+   "quadrant": 3,
+   "position": 8,
+   "type": "third molar",
+   "side": "lower left",
+   "group": "molar"
+  },
+  {
+   "fdi": "41",
+   "box": [
+    308.0,
+    198.0,
+    325.3,
+    266.2
+   ],
+   "confidence": 0.709,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "41",
+   "quadrant": 4,
+   "position": 1,
+   "type": "central incisor",
+   "side": "lower right",
+   "group": "incisor"
+  },
+  {
+   "fdi": "42",
+   "box": [
+    292.2,
+    196.8,
+    312.7,
+    271.5
+   ],
+   "confidence": 0.694,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "42",
+   "quadrant": 4,
+   "position": 2,
+   "type": "lateral incisor",
+   "side": "lower right",
+   "group": "incisor"
+  },
+  {
+   "fdi": "43",
+   "box": [
+    271.2,
+    193.4,
+    297.1,
+    273.1
+   ],
+   "confidence": 0.866,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "43",
+   "quadrant": 4,
+   "position": 3,
+   "type": "canine",
+   "side": "lower right",
+   "group": "canine"
+  },
+  {
+   "fdi": "44",
+   "box": [
+    244.4,
+    193.5,
+    279.1,
+    268.8
+   ],
+   "confidence": 0.766,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "44",
+   "quadrant": 4,
+   "position": 4,
+   "type": "first premolar",
+   "side": "lower right",
+   "group": "premolar"
+  },
+  {
+   "fdi": "45",
+   "box": [
+    215.9,
+    189.0,
+    262.0,
+    262.4
+   ],
+   "confidence": 0.821,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "45",
+   "quadrant": 4,
+   "position": 5,
+   "type": "second premolar",
+   "side": "lower right",
+   "group": "premolar"
+  },
+  {
+   "fdi": "46",
+   "box": [
+    176.1,
+    183.3,
+    239.7,
+    255.6
+   ],
+   "confidence": 0.777,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "46",
+   "quadrant": 4,
+   "position": 6,
+   "type": "first molar",
+   "side": "lower right",
+   "group": "molar"
+  },
+  {
+   "fdi": "47",
+   "box": [
+    146.8,
+    172.5,
+    206.0,
+    240.6
+   ],
+   "confidence": 0.862,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "47",
+   "quadrant": 4,
+   "position": 7,
+   "type": "second molar",
+   "side": "lower right",
+   "group": "molar"
+  },
+  {
+   "fdi": "48",
+   "box": [
+    130.4,
+    169.5,
+    170.5,
+    214.2
+   ],
+   "confidence": 0.775,
+   "renumbered": false,
+   "number_uncertain": false,
+   "model_number": "48",
+   "quadrant": 4,
+   "position": 8,
+   "type": "third molar",
+   "side": "lower right",
+   "group": "molar"
+  }
+ ],
+ "findings": [
+  {
+   "diagnosis": "impacted",
+   "label": "Impacted tooth",
+   "box": [
+    131.8,
+    168.1,
+    170.4,
+    210.8
+   ],
+   "confidence": 0.896,
+   "fdi": "48",
+   "tooth_match_score": 0.864,
+   "display_box": [
+    131.8,
+    169.5,
+    170.4,
+    210.8
+   ],
+   "status": "likely",
+   "needs_review": false,
+   "review_reasons": [],
+   "tooth": {
+    "fdi": "48",
+    "quadrant": 4,
+    "position": 8,
+    "type": "third molar",
+    "side": "lower right",
+    "group": "molar"
+   },
+   "display": "Impacted tooth - 90%"
+  },
+  {
+   "diagnosis": "impacted",
+   "label": "Impacted tooth",
+   "box": [
+    152.2,
+    97.0,
+    190.7,
+    136.3
+   ],
+   "confidence": 0.89,
+   "fdi": "18",
+   "tooth_match_score": 0.866,
+   "display_box": [
+    152.2,
+    97.3,
+    190.7,
+    135.4
+   ],
+   "status": "likely",
+   "needs_review": false,
+   "review_reasons": [],
+   "tooth": {
+    "fdi": "18",
+    "quadrant": 1,
+    "position": 8,
+    "type": "third molar",
+    "side": "upper right",
+    "group": "molar"
+   },
+   "display": "Impacted tooth - 89%"
+  },
+  {
+   "diagnosis": "impacted",
+   "label": "Impacted tooth",
+   "box": [
+    447.9,
+    101.7,
+    486.6,
+    143.9
+   ],
+   "confidence": 0.881,
+   "fdi": "28",
+   "tooth_match_score": 0.904,
+   "display_box": [
+    447.9,
+    102.1,
+    485.9,
+    142.5
+   ],
+   "status": "likely",
+   "needs_review": false,
+   "review_reasons": [],
+   "tooth": {
+    "fdi": "28",
+    "quadrant": 2,
+    "position": 8,
+    "type": "third molar",
+    "side": "upper left",
+    "group": "molar"
+   },
+   "display": "Impacted tooth - 88%"
+  },
+  {
+   "diagnosis": "impacted",
+   "label": "Impacted tooth",
+   "box": [
+    471.4,
+    171.5,
+    509.7,
+    213.7
+   ],
+   "confidence": 0.881,
+   "fdi": "38",
+   "tooth_match_score": 0.797,
+   "display_box": [
+    472.5,
+    173.0,
+    509.7,
+    213.7
+   ],
+   "status": "likely",
+   "needs_review": false,
+   "review_reasons": [],
+   "tooth": {
+    "fdi": "38",
+    "quadrant": 3,
+    "position": 8,
+    "type": "third molar",
+    "side": "lower left",
+    "group": "molar"
+   },
+   "display": "Impacted tooth - 88%"
+  },
+  {
+   "diagnosis": "caries",
+   "label": "Caries",
+   "box": [
+    401.7,
+    187.1,
+    464.7,
+    255.2
+   ],
+   "confidence": 0.832,
+   "fdi": "36",
+   "tooth_match_score": 0.908,
+   "display_box": [
+    401.7,
+    187.3,
+    464.7,
+    255.2
+   ],
+   "status": "likely",
+   "needs_review": false,
+   "review_reasons": [],
+   "tooth": {
+    "fdi": "36",
+    "quadrant": 3,
+    "position": 6,
+    "type": "first molar",
+    "side": "lower left",
+    "group": "molar"
+   },
+   "display": "Caries - 83%"
+  },
+  {
+   "diagnosis": "caries",
+   "label": "Caries",
+   "box": [
+    408.1,
+    115.0,
+    445.4,
+    183.2
+   ],
+   "confidence": 0.605,
+   "fdi": "26",
+   "tooth_match_score": 0.82,
+   "display_box": [
+    409.8,
+    115.0,
+    445.0,
+    182.5
+   ],
+   "status": "likely",
+   "needs_review": false,
+   "review_reasons": [],
+   "tooth": {
+    "fdi": "26",
+    "quadrant": 2,
+    "position": 6,
+    "type": "first molar",
+    "side": "upper left",
+    "group": "molar"
+   },
+   "display": "Caries - 60%"
+  },
+  {
+   "diagnosis": "caries",
+   "label": "Caries",
+   "box": [
+    150.1,
+    171.7,
+    205.6,
+    236.4
+   ],
+   "confidence": 0.59,
+   "fdi": "47",
+   "tooth_match_score": 0.87,
+   "display_box": [
+    150.1,
+    172.5,
+    205.6,
+    236.4
+   ],
+   "status": "likely",
+   "needs_review": false,
+   "review_reasons": [],
+   "tooth": {
+    "fdi": "47",
+    "quadrant": 4,
+    "position": 7,
+    "type": "second molar",
+    "side": "lower right",
+    "group": "molar"
+   },
+   "display": "Caries - 59%"
+  },
+  {
+   "diagnosis": "caries",
+   "label": "Caries",
+   "box": [
+    165.2,
+    107.5,
+    205.0,
+    171.2
+   ],
+   "confidence": 0.455,
+   "fdi": "17",
+   "tooth_match_score": 0.832,
+   "display_box": [
+    165.2,
+    107.5,
+    205.0,
+    170.8
+   ],
+   "status": "possible",
+   "needs_review": true,
+   "review_reasons": [
+    "confidence below 0.50"
+   ],
+   "tooth": {
+    "fdi": "17",
+    "quadrant": 1,
+    "position": 7,
+    "type": "second molar",
+    "side": "upper right",
+    "group": "molar"
+   },
+   "display": "Possible caries - 46% (needs review)"
+  },
+  {
+   "diagnosis": "caries",
+   "label": "Caries",
+   "box": [
+    179.5,
+    182.5,
+    242.0,
+    247.8
+   ],
+   "confidence": 0.392,
+   "fdi": "46",
+   "tooth_match_score": 0.809,
+   "display_box": [
+    179.5,
+    183.3,
+    239.7,
+    247.8
+   ],
+   "status": "possible",
+   "needs_review": true,
+   "review_reasons": [
+    "confidence below 0.50"
+   ],
+   "tooth": {
+    "fdi": "46",
+    "quadrant": 4,
+    "position": 6,
+    "type": "first molar",
+    "side": "lower right",
+    "group": "molar"
+   },
+   "display": "Possible caries - 39% (needs review)"
+  },
+  {
+   "diagnosis": "caries",
+   "label": "Caries",
+   "box": [
+    192.2,
+    112.5,
+    229.6,
+    179.4
+   ],
+   "confidence": 0.314,
+   "fdi": "16",
+   "tooth_match_score": 0.821,
+   "display_box": [
+    192.9,
+    112.5,
+    229.6,
+    179.4
+   ],
+   "status": "possible",
+   "needs_review": true,
+   "review_reasons": [
+    "confidence below 0.50"
+   ],
+   "tooth": {
+    "fdi": "16",
+    "quadrant": 1,
+    "position": 6,
+    "type": "first molar",
+    "side": "upper right",
+    "group": "molar"
+   },
+   "display": "Possible caries - 31% (needs review)"
+  },
+  {
+   "diagnosis": "caries",
+   "label": "Caries",
+   "box": [
+    382.6,
+    193.9,
+    425.4,
+    257.4
+   ],
+   "confidence": 0.309,
+   "fdi": "35",
+   "tooth_match_score": 0.792,
+   "display_box": [
+    384.6,
+    195.2,
+    425.4,
+    257.4
+   ],
+   "status": "possible",
+   "needs_review": true,
+   "review_reasons": [
+    "confidence below 0.50"
+   ],
+   "tooth": {
+    "fdi": "35",
+    "quadrant": 3,
+    "position": 5,
+    "type": "second premolar",
+    "side": "lower left",
+    "group": "premolar"
+   },
+   "display": "Possible caries - 31% (needs review)"
+  }
+ ],
+ "suppressed_findings": [],
+ "summary": {
+  "teeth_detected": 32,
+  "teeth_renumbered": 0,
+  "not_detected": [],
+  "third_molars_not_detected": [],
+  "likely": {
+   "caries": 3,
+   "deep_caries": 0,
+   "periapical_lesion": 0,
+   "impacted": 4
+  },
+  "possible": {
+   "caries": 4,
+   "deep_caries": 0,
+   "periapical_lesion": 0,
+   "impacted": 0
+  },
+  "needs_review": 4
+ },
+ "chart": {
+  "11": {
+   "present": true,
+   "findings": []
+  },
+  "12": {
+   "present": true,
+   "findings": []
+  },
+  "13": {
+   "present": true,
+   "findings": []
+  },
+  "14": {
+   "present": true,
+   "findings": []
+  },
+  "15": {
+   "present": true,
+   "findings": []
+  },
+  "16": {
+   "present": true,
+   "findings": [
+    {
+     "diagnosis": "caries",
+     "status": "possible"
+    }
+   ]
+  },
+  "17": {
+   "present": true,
+   "findings": [
+    {
+     "diagnosis": "caries",
+     "status": "possible"
+    }
+   ]
+  },
+  "18": {
+   "present": true,
+   "findings": [
+    {
+     "diagnosis": "impacted",
+     "status": "likely"
+    }
+   ]
+  },
+  "21": {
+   "present": true,
+   "findings": []
+  },
+  "22": {
+   "present": true,
+   "findings": []
+  },
+  "23": {
+   "present": true,
+   "findings": []
+  },
+  "24": {
+   "present": true,
+   "findings": []
+  },
+  "25": {
+   "present": true,
+   "findings": []
+  },
+  "26": {
+   "present": true,
+   "findings": [
+    {
+     "diagnosis": "caries",
+     "status": "likely"
+    }
+   ]
+  },
+  "27": {
+   "present": true,
+   "findings": []
+  },
+  "28": {
+   "present": true,
+   "findings": [
+    {
+     "diagnosis": "impacted",
+     "status": "likely"
+    }
+   ]
+  },
+  "31": {
+   "present": true,
+   "findings": []
+  },
+  "32": {
+   "present": true,
+   "findings": []
+  },
+  "33": {
+   "present": true,
+   "findings": []
+  },
+  "34": {
+   "present": true,
+   "findings": []
+  },
+  "35": {
+   "present": true,
+   "findings": [
+    {
+     "diagnosis": "caries",
+     "status": "possible"
+    }
+   ]
+  },
+  "36": {
+   "present": true,
+   "findings": [
+    {
+     "diagnosis": "caries",
+     "status": "likely"
+    }
+   ]
+  },
+  "37": {
+   "present": true,
+   "findings": []
+  },
+  "38": {
+   "present": true,
+   "findings": [
+    {
+     "diagnosis": "impacted",
+     "status": "likely"
+    }
+   ]
+  },
+  "41": {
+   "present": true,
+   "findings": []
+  },
+  "42": {
+   "present": true,
+   "findings": []
+  },
+  "43": {
+   "present": true,
+   "findings": []
+  },
+  "44": {
+   "present": true,
+   "findings": []
+  },
+  "45": {
+   "present": true,
+   "findings": []
+  },
+  "46": {
+   "present": true,
+   "findings": [
+    {
+     "diagnosis": "caries",
+     "status": "possible"
+    }
+   ]
+  },
+  "47": {
+   "present": true,
+   "findings": [
+    {
+     "diagnosis": "caries",
+     "status": "likely"
+    }
+   ]
+  },
+  "48": {
+   "present": true,
+   "findings": [
+    {
+     "diagnosis": "impacted",
+     "status": "likely"
+    }
+   ]
+  }
+ },
+ "settings": {
+  "thresholds": {
+   "caries": 0.5,
+   "deep_caries": 0.5,
+   "periapical_lesion": 0.45,
+   "impacted": 0.55
+  },
+  "floor": 0.3,
+  "teeth": 0.4,
+  "preprocess": "none",
+  "threshold_source": "defaults (not yet calibrated)"
+ },
+ "timing_ms": {
+  "teeth": 1689,
+  "findings": 1801,
+  "total": 3490
+ },
+ "disclaimer": "AI-generated decision support for a qualified dentist. Not a diagnosis. Every finding must be confirmed by a clinician. Research use only."
+}

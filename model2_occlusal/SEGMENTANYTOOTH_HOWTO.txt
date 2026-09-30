@@ -1,0 +1,49 @@
+HOW TO GET SEGMENTANYTOOTH WEIGHTS (enables tooth type: incisor / canine / premolar / molar)
+=============================================================================================
+
+Why: SegmentAnyTooth outputs each tooth's FDI number (11-48). Tooth type comes from the
+last digit:  1-2 = incisor,  3 = canine,  4-5 = premolar,  6-8 = molar.
+It is the ONLY option that gives per-tooth type on intraoral photos - no public dataset
+provides this to train your own.
+
+Cost: free for research. Licence: NON-COMMERCIAL (fine for the KGMU study and papers;
+a paid product would need the authors' permission).
+
+STEPS
+-----
+1. Open  SegmentAnyTooth_license_agreement.pdf  (in this folder).
+2. Fill in your details and sign it (print+sign+scan, or sign digitally).
+   - Use your KGMU / St. Joseph academic details; state academic research use.
+3. Email the signed PDF to:  hi+segmentanytooth@khoanguyen.me
+   Suggested subject:  SegmentAnyTooth weights - academic research request
+4. They reply (in working days) with a download link for the weights:
+     segmentanytooth_vit_tiny.pt
+     segmentanytooth_yolo11_upper.pt
+     segmentanytooth_yolo11_lower.pt
+     segmentanytooth_yolo11_front.pt
+     segmentanytooth_yolo11_right.pt
+
+WHEN THE WEIGHTS ARRIVE
+-----------------------
+1. On Kaggle: Create -> New Dataset -> upload all 5 .pt files. Keep it PRIVATE.
+2. Open the Model 2 notebook -> Add Input -> your new SegmentAnyTooth dataset.
+3. Save & Run All. The notebook detects the weights and turns on tooth type automatically
+   (USE_SEGMENTANYTOOTH = "auto").
+4. Send me the run output and I'll add "36 - Molar - Moderate caries" style labels to the
+   test tool.
+
+Draft email you can copy:
+-------------------------
+To: hi+segmentanytooth@khoanguyen.me
+Subject: SegmentAnyTooth weights - academic research request
+
+Dear Dr. Nguyen,
+
+I am an academic researcher working on a non-commercial dental AI study (caries
+screening on intraoral photographs, in collaboration with KGMU). I have signed the
+SegmentAnyTooth non-commercial licence agreement (attached) and would be grateful for
+a link to download the model weights for research use.
+
+Thank you very much.
+Best regards,
+Keshav
