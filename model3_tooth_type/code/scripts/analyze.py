@@ -41,7 +41,7 @@ HOSTED_WORKFLOW_ID = "dental_dataset_level2-fazpu"        # live workflow endpoi
 HOSTED_URL = "https://serverless.roboflow.com"
 
 # local YOLO11 .pt (produced by notebooks/train_model3_kaggle.ipynb) - offline, no API key.
-DEFAULT_WEIGHTS = str(Path(__file__).resolve().parents[2] / "weights" / "best.pt")
+DEFAULT_WEIGHTS = str(Path(__file__).resolve().parents[2] / "models" / "best.pt")
 
 # one stable colour per tooth type (BGR)
 TYPE_COLORS = {"incisor": (66, 133, 244), "canine": (219, 68, 55),

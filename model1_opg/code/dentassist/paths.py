@@ -37,8 +37,8 @@ HOME = project_home()
 RAW = HOME / "data" / "raw"
 DATA = HOME / "data" / "yolo"
 RUNS = HOME / "runs"
-WEIGHTS = HOME / "weights"
-RESULTS = HOME / "results"
+WEIGHTS = HOME / "models"
+RESULTS = HOME / "outputs"
 
 
 def ensure() -> Path:

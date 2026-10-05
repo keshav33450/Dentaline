@@ -1,0 +1,293 @@
+{
+ "backend": "weights",
+ "n_teeth": 28,
+ "counts": {
+  "molar": 8,
+  "premolar": 8,
+  "canine": 4,
+  "incisor": 8
+ },
+ "teeth": [
+  {
+   "type": "molar",
+   "confidence": 0.807,
+   "bbox": [
+    67.0,
+    737.5,
+    360.5,
+    931.3
+   ]
+  },
+  {
+   "type": "molar",
+   "confidence": 0.857,
+   "bbox": [
+    79.0,
+    559.7,
+    373.3,
+    820.6
+   ]
+  },
+  {
+   "type": "premolar",
+   "confidence": 0.819,
+   "bbox": [
+    136.3,
+    429.5,
+    370.0,
+    620.2
+   ]
+  },
+  {
+   "type": "premolar",
+   "confidence": 0.859,
+   "bbox": [
+    189.5,
+    306.3,
+    430.0,
+    510.3
+   ]
+  },
+  {
+   "type": "canine",
+   "confidence": 0.866,
+   "bbox": [
+    260.4,
+    150.2,
+    461.2,
+    357.3
+   ]
+  },
+  {
+   "type": "incisor",
+   "confidence": 0.846,
+   "bbox": [
+    366.4,
+    83.7,
+    546.2,
+    257.8
+   ]
+  },
+  {
+   "type": "incisor",
+   "confidence": 0.865,
+   "bbox": [
+    505.0,
+    18.5,
+    723.1,
+    217.6
+   ]
+  },
+  {
+   "type": "incisor",
+   "confidence": 0.861,
+   "bbox": [
+    704.7,
+    14.6,
+    918.1,
+    206.4
+   ]
+  },
+  {
+   "type": "incisor",
+   "confidence": 0.846,
+   "bbox": [
+    874.9,
+    62.9,
+    1059.8,
+    251.7
+   ]
+  },
+  {
+   "type": "canine",
+   "confidence": 0.857,
+   "bbox": [
+    982.1,
+    138.3,
+    1183.0,
+    351.8
+   ]
+  },
+  {
+   "type": "premolar",
+   "confidence": 0.856,
+   "bbox": [
+    1025.9,
+    283.9,
+    1258.4,
+    490.1
+   ]
+  },
+  {
+   "type": "premolar",
+   "confidence": 0.785,
+   "bbox": [
+    1081.2,
+    411.0,
+    1322.0,
+    615.1
+   ]
+  },
+  {
+   "type": "molar",
+   "confidence": 0.793,
+   "bbox": [
+    1083.5,
+    547.8,
+    1370.9,
+    813.1
+   ]
+  },
+  {
+   "type": "molar",
+   "confidence": 0.787,
+   "bbox": [
+    1108.7,
+    704.7,
+    1402.0,
+    922.1
+   ]
+  },
+  {
+   "type": "molar",
+   "confidence": 0.882,
+   "bbox": [
+    1578.5,
+    22.3,
+    1843.1,
+    261.4
+   ]
+  },
+  {
+   "type": "molar",
+   "confidence": 0.87,
+   "bbox": [
+    1618.9,
+    222.3,
+    1870.3,
+    482.5
+   ]
+  },
+  {
+   "type": "premolar",
+   "confidence": 0.875,
+   "bbox": [
+    1681.5,
+    423.3,
+    1882.5,
+    615.9
+   ]
+  },
+  {
+   "type": "premolar",
+   "confidence": 0.873,
+   "bbox": [
+    1750.9,
+    559.3,
+    1920.3,
+    751.6
+   ]
+  },
+  {
+   "type": "canine",
+   "confidence": 0.867,
+   "bbox": [
+    1838.1,
+    676.9,
+    2005.5,
+    850.1
+   ]
+  },
+  {
+   "type": "incisor",
+   "confidence": 0.837,
+   "bbox": [
+    1922.1,
+    759.1,
+    2076.1,
+    912.5
+   ]
+  },
+  {
+   "type": "incisor",
+   "confidence": 0.842,
+   "bbox": [
+    2050.9,
+    785.5,
+    2188.9,
+    933.0
+   ]
+  },
+  {
+   "type": "incisor",
+   "confidence": 0.842,
+   "bbox": [
+    2166.2,
+    796.5,
+    2302.8,
+    944.6
+   ]
+  },
+  {
+   "type": "incisor",
+   "confidence": 0.808,
+   "bbox": [
+    2268.5,
+    773.7,
+    2420.7,
+    916.8
+   ]
+  },
+  {
+   "type": "canine",
+   "confidence": 0.879,
+   "bbox": [
+    2363.4,
+    697.9,
+    2524.2,
+    883.1
+   ]
+  },
+  {
+   "type": "premolar",
+   "confidence": 0.871,
+   "bbox": [
+    2455.1,
+    591.8,
+    2626.5,
+    777.0
+   ]
+  },
+  {
+   "type": "premolar",
+   "confidence": 0.873,
+   "bbox": [
+    2496.8,
+    462.6,
+    2700.0,
+    658.7
+   ]
+  },
+  {
+   "type": "molar",
+   "confidence": 0.886,
+   "bbox": [
+    2519.6,
+    266.3,
+    2769.2,
+    520.8
+   ]
+  },
+  {
+   "type": "molar",
+   "confidence": 0.894,
+   "bbox": [
+    2574.4,
+    56.4,
+    2834.4,
+    308.1
+   ]
+  }
+ ],
+ "disclaimer": "Research prototype - not a diagnostic system."
+}

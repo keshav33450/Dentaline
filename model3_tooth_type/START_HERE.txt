@@ -1,18 +1,18 @@
-MODEL 3 - TOOTH TYPE (intraoral photo)     TRAINED 05-10-2026 on Kaggle (YOLO11s)
+MODEL 3 - TOOTH TYPE (intraoral, view-robust)     TRAINED 05-10-2026 on Kaggle (YOLO11s)
 
-Detects each tooth one by one and labels it by FDI tooth type:
-   Central Incisor / Lateral Incisor / Canine / 1st Premolar / 2nd Premolar / 1st Molar / 2nd Molar
+Detects each tooth and labels it:  incisor / canine / premolar / molar
+Works across frontal AND occlusal (upper/lower) intraoral photos.
 
-Test accuracy (42 images, 758 teeth):
-   Overall  mAP50 65.3   mAP50-95 56.7
-      Central Incisor 86.7   Canine 81.1   Lateral Incisor 71.9
-      1st Premolar 68.9   2nd Premolar 60.6   1st Molar 59.6   2nd Molar 28.4
+Test accuracy (134 images, 2,243 teeth):
+   Overall  mAP50 94.6   mAP50-95 66.6
+   Per view: frontal 94.9 | upper 94.7 | lower 94.5
+   Per class: incisor 97.3 | canine 95.1 | premolar 94.4 | molar 91.5
 
 HOW TO RUN
    1) one-click : ANALYZE_TEST_IMAGES.bat   (put photos in test_images\)
-        -> tooth_types.jpg + result.json  in  test_images\results
+        -> result .jpg + .json  in  test_images\results
    2) one photo : drag it onto  code\windows\analyze_image.bat
    3) local API : code\windows\run_api.bat   ->  http://localhost:8003
 
-Data: tooth-labelling dataset (Roboflow), 7 FDI tooth-type classes.
+Data: DentalMate6v Front/Upper/Lower intraoral datasets (CC BY 4.0), FDI remapped to 4 types.
 Research prototype - not a diagnosis.
