@@ -20,7 +20,7 @@ detection — each trained on real dental datasets and runnable offline on a cli
 |-----------|-------------|
 | **Model 1 — Panoramic X-ray (OPG)** | FDI tooth numbering + detection of caries, deep caries, periapical lesions, impacted teeth. |
 | **Model 2 — Occlusal caries (smartphone)** | Caries detection on intraoral/occlusal photos + ICDAS-derived severity (No / Mild / Moderate / Advanced). |
-| **Model 3 — Tooth type (intraoral)** | Detects each tooth one-by-one and labels it incisor / canine / premolar / molar. |
+| **Model 3 — Tooth type (intraoral)** | Detects each tooth one-by-one and labels it by FDI tooth type (central/lateral incisor, canine, 1st/2nd premolar, 1st/2nd molar). |
 | **Unified runners** | Every model runs the same way: one folder-batch script, one drag-a-photo script, one local API. |
 | **Training notebooks** | Kaggle-ready notebooks reproduce each model on a free T4 GPU. |
 | **Reports** | Per-model metrics, confusion matrices, and training curves for the write-up / paper. |
@@ -33,7 +33,7 @@ detection — each trained on real dental datasets and runnable offline on a cli
 |------|---------|
 | `model1_opg/` | Panoramic X-ray model (OPG). |
 | `model2_occlusal/` | Smartphone occlusal-caries model + ICDAS severity. |
-| `model3_tooth_type/` | Intraoral tooth-type model (incisor/canine/premolar/molar). |
+| `model3_tooth_type/` | Intraoral tooth-type model (7 FDI classes: central/lateral incisor, canine, 1st/2nd premolar, 1st/2nd molar). |
 | `<model>/code/` | Source: `scripts/` (analysis), `api/` (FastAPI), `windows/` (helper .bat), package modules. |
 | `<model>/weights/` | Trained model weights (`.pt` / `.onnx`). |
 | `<model>/notebooks/` | Kaggle training notebook(s). |
@@ -73,15 +73,23 @@ YOLO caries detector + EfficientNet severity grader, trained on Zenodo smartphon
 | Severity classes | No / Mild / Moderate / Advanced (ICDAS-derived) |
 
 ### Model 3 — Tooth type (intraoral)
-YOLO11s, trained on Dental_Dataset_Level2 (2,368 images).
+YOLO11s, trained on the tooth-labelling dataset (7 FDI tooth-type classes).
 
 | Class | mAP@50 | mAP@50-95 |
 |-------|--------|-----------|
-| incisor | 0.995 | 0.953 |
-| canine | 0.995 | 0.884 |
-| premolar | 0.995 | 0.856 |
-| molar | 0.981 | 0.689 |
-| **overall** | **0.991** | **0.845** |
+| Central Incisor | 0.867 | 0.814 |
+| Canine | 0.811 | 0.749 |
+| Lateral Incisor | 0.719 | 0.660 |
+| 1st Premolar | 0.689 | 0.597 |
+| 2nd Premolar | 0.606 | 0.469 |
+| 1st Molar | 0.596 | 0.440 |
+| 2nd Molar | 0.284 | 0.238 |
+| **overall** | **0.653** | **0.567** |
+
+> This 7-class model splits incisors (central/lateral), premolars and molars (1st/2nd) for finer
+> FDI-type granularity. An earlier 4-class variant (incisor/canine/premolar/molar on
+> Dental_Dataset_Level2, 1,310 imgs) reached 0.991 mAP@50; this run is data-limited (~420 imgs,
+> 2nd molars sparse in the test split).
 
 ---
 
@@ -91,7 +99,7 @@ YOLO11s, trained on Dental_Dataset_Level2 (2,368 images).
 |---------|---------|---------|-------|
 | DENTEX (panoramic X-rays) | Model 1 | CC BY-NC-SA 4.0 | FDI numbering + findings. |
 | Zenodo smartphone caries (14769743) | Model 2 | CC BY | Caries boxes + ICDAS severity. |
-| Dental_Dataset_Level2 | Model 3 | CC BY 4.0 | 2,149 / 112 / 107 train-val-test; 4 tooth classes. |
+| tooth-labelling (Roboflow) | Model 3 | per project | 7 FDI tooth-type classes; intraoral photos. |
 
 ---
 
@@ -101,7 +109,7 @@ YOLO11s, trained on Dental_Dataset_Level2 (2,368 images).
 |-------|--------------|----------|-------|
 | Model 1 | YOLO11 detect + FDI post-processing | DENTEX, T4×2 | `model1_opg/notebooks/` |
 | Model 2 | YOLO caries detector + EfficientNet-B0 severity | Zenodo, T4×2 | `model2_occlusal/notebooks/` |
-| Model 3 | YOLO11s detection (4 classes) | Kaggle T4×2 | `model3_tooth_type/notebooks/` |
+| Model 3 | YOLO11s detection (7 FDI classes) | Kaggle T4 | `model3_tooth_type/notebooks/` |
 
 Each notebook is self-contained: pull the dataset → train → evaluate → export `best.pt` + `best.onnx`.
 
@@ -159,8 +167,26 @@ output zip → drop `best.pt` (+ `best.onnx`) into the model's `weights/`.
 
 ---
 
+## Evaluation & reproducibility
+
+This is a research project, not only an application. Evaluation status, gap analysis, and the plan to
+close each gap are tracked in **[RESEARCH_EVALUATION.md](RESEARCH_EVALUATION.md)**. A unified,
+reproducible evaluation script (`tools/evaluate.py`) regenerates per-class Precision/Recall/F1,
+confusion matrices, curves, and a data-leakage report for any model — no numbers are hand-entered.
+
+**Model count is frozen at 3** until the existing pipelines are fully evaluated and reproducible.
+
 ## Roadmap
 
+### Evaluation hardening (current priority)
+- [x] Model 3 — full per-class P/R/F1, confusion matrix, PR/F1 curves
+- [ ] Models 1 & 2 — regenerate per-class P/R/F1 + confusion matrices via `tools/evaluate.py`
+- [ ] Data-leakage check across train/val/test for all three datasets
+- [ ] Record training time, logs, and library versions per model
+- [ ] Result stability — ≥3-seed repeats or bootstrap 95% CI (start with Model 3)
+- [ ] One ablation table per model (size / imgsz / augmentation / dataset-size)
+
+### Features (after evaluation is solid)
 - [x] Model 1 — panoramic X-ray (FDI + findings)
 - [x] Model 2 — occlusal caries + ICDAS severity
 - [x] Model 3 — tooth-type detection

@@ -23,6 +23,7 @@ API key: pass --api-key, or set ROBOFLOW_API_KEY. The publishable key (rf_...) w
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -49,9 +50,23 @@ DEFAULT_COLOR = (171, 71, 188)
 
 
 def _norm_type(label: str) -> str:
-    """Map a raw class label to one of incisor/canine/premolar/molar (tolerant to plurals/case)."""
-    s = str(label).strip().lower().rstrip("s")
-    return s if s in TYPE_CLASSES else str(label).strip().lower()
+    """Normalise a class label. The model's own class names are kept as-is (so FDI-type
+    models like 'Central Incisor', '1st Molar' pass through unchanged); the legacy 4-type
+    labels are lower-cased/de-pluralised to incisor/canine/premolar/molar."""
+    raw = str(label).strip()
+    s = raw.lower().rstrip("s")
+    if s in TYPE_CLASSES:
+        return s
+    return raw  # keep the model's native class name (e.g. "Central Incisor")
+
+
+def _color_for(label: str):
+    """Stable BGR colour for any class: fixed palette for the 4 legacy types,
+    deterministic hash-based colour for everything else."""
+    if label in TYPE_COLORS:
+        return TYPE_COLORS[label]
+    h = hashlib.md5(label.encode()).digest()
+    return (60 + h[0] % 196, 60 + h[1] % 196, 60 + h[2] % 196)
 
 
 def _to_teeth(preds: list[dict]) -> list[dict]:
@@ -124,7 +139,7 @@ def run(image_path, backend="weights", api_key=None, conf=0.4, model_id=None, we
             preds = _infer_hosted(image_path, model_id or HOSTED_WORKFLOW_ID, api_key, conf)
     teeth = _to_teeth(preds)
 
-    counts = {t: 0 for t in TYPE_CLASSES}
+    counts = {}
     for t in teeth:
         counts[t["type"]] = counts.get(t["type"], 0) + 1
     res = {"backend": backend, "n_teeth": len(teeth), "counts": counts, "teeth": teeth,
@@ -135,7 +150,7 @@ def run(image_path, backend="weights", api_key=None, conf=0.4, model_id=None, we
 def draw(img, res):
     out = img.copy()
     for t in res["teeth"]:
-        c = TYPE_COLORS.get(t["type"], DEFAULT_COLOR)
+        c = _color_for(t["type"])
         x0, y0, x1, y1 = map(int, t["bbox"])
         cv2.rectangle(out, (x0, y0), (x1, y1), c, 2)
         lbl = f"{t['type']} {t['confidence']:.2f}"
