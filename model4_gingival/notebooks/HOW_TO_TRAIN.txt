@@ -1,0 +1,15 @@
+GET best.pt FOR MODEL 4  (Kaggle GPU T4, ~25 min)
+=================================================
+1. Kaggle.com -> Code -> New Notebook -> File -> Upload Notebook -> train_model4_kaggle.ipynb
+2. Right panel Settings: Accelerator = GPU T4, Internet = On,
+   Persistence = "Variables and Files".
+3. Add a Kaggle Secret (Add-ons -> Secrets) OR paste your Roboflow key in Cell 3.
+   Datasets download directly from Roboflow Universe (public, CC BY 4.0) - no upload needed.
+4. Run cells in order: 1 -> RESTART KERNEL -> 2 -> 3 -> 4 -> (check 6 sample images) -> 5 -> 6 -> 7.
+5. Output: model4_outputs.zip  ->  send to Claude -> it unpacks best.pt + best.onnx into models\.
+
+KEY GOTCHAS (all handled in the notebook):
+  - No numpy pin: use Kaggle's stock numpy 2.x + current ultralytics (pinning numpy<2 breaks).
+  - Single GPU: set CUDA_VISIBLE_DEVICES=0 BEFORE importing torch (2 visible GPUs -> DDP crash).
+  - Absolute save path (/kaggle/working/m4) + guarded bundle cell (won't zip empty weights).
+  - If GPU shows 0 after restart: check Settings -> Accelerator (weekly 30h quota may be spent).

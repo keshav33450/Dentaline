@@ -1,0 +1,19 @@
+MODEL 4 - GINGIVAL INFLAMMATION (gingivitis)       TRAINED 06-10-2026 on Kaggle (YOLO11s)
+
+Detects inflamed-gum regions: erythema (redness), edema (swelling), visible
+bleeding-on-probing. Single class: gingivitis.
+View-robust: frontal + upper + lower intraoral / mobile photos, all merged.
+
+Validation accuracy (46 images, best epoch 99 of 120):
+   mAP50 80.4   mAP50-95 36.9   Precision 78.4   Recall 72.9
+
+HOW TO RUN
+   1) one-click : ANALYZE_TEST_IMAGES.bat   (put photos in test_images\)
+        -> result .jpg + .json  in  test_images\results
+   2) one photo : drag it onto  code\windows\analyze_image.bat
+   3) local API : code\windows\run_api.bat   ->  http://localhost:8004
+
+Fully offline - no API key needed (local YOLO11s best.pt).
+
+Data: sampling/gingivitis + Pranta/gum-disease (Roboflow Universe, CC BY 4.0).
+Research prototype / screening aid - not a diagnosis.

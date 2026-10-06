@@ -1,0 +1,7 @@
+ultralytics>=8.3.0
+opencv-python
+numpy
+# optional, for the local API (windows\run_api.bat):
+# fastapi
+# uvicorn
+# python-multipart

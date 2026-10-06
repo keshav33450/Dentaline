@@ -81,6 +81,45 @@ occlusal images. Full log: `results/results.csv`; curves + confusion matrix in `
 > 7-class 0.653 on tooth-labelling). This multi-view model is the current Model 3.
 
 
+## Model 4 — Gingival inflammation (gingivitis)
+
+YOLO11s, single class `gingivitis`, trained on two merged public datasets:
+**sampling/gingivitis-6uyts** (468 imgs, detection) + **Pranta/gum-disease-mmzcr** (segmentation;
+Periodontitis class dropped, polygons reduced to boxes). Both Roboflow Universe, CC BY 4.0. Only
+gingivitis boxes were kept and merged into one class; all views (frontal / upper / lower) combined.
+
+**Config:** `yolo11s.pt`, imgsz 640, batch 16, epochs 120, single GPU T4, seed 42, patience 30.
+
+**Splits:** merged **train 480 / valid 46 / test 45** images — 571 images, 1,508 gingivitis boxes total.
+
+**Best (validation, epoch 99 of 120): mAP@50 0.804, mAP@50-95 0.369** (P 0.784, R 0.729).
+
+| Epoch | P | R | mAP@50 | mAP@50-95 |
+|-------|---|---|--------|-----------|
+| 99 (best) | 0.784 | 0.729 | **0.804** | 0.369 |
+| 120 (last) | 0.790 | 0.709 | 0.781 | 0.373 |
+
+Final train losses (ep120): box 1.186 · cls 0.833 · dfl 1.368. Full log: `outputs/results.csv`;
+curves + confusion matrix in `outputs/`.
+
+> **Honest caveats.** (1) Figures above are the held-out **validation** split; the notebook's Cell 6
+> also runs a **test**-split evaluation (`evaluate.ipynb` reproduces it). (2) The two source datasets
+> use **loose, region-level boxes** (inflamed gum + adjacent tooth), which caps localisation quality —
+> hence the modest mAP@50-95 (0.369) against a strong detection mAP@50 (0.804). The intended output is a
+> screening signal (is gingivitis present, and roughly where), not pixel-tight segmentation. (3) Only
+> ~571 genuinely-labelled gingivitis images exist publicly; more data is the main path to improvement.
+
+### Training obstacles resolved (Kaggle)
+- **NumPy:** pinning `numpy<2` corrupted the GPU session (`No module named 'numpy.rec'`). Fix: use
+  Kaggle's stock NumPy 2.x + current Ultralytics (mutually compatible), no pin.
+- **2 GPUs:** `device=0` with 2 visible T4s triggered a DDP/Ray crash before any checkpoint saved. Fix:
+  set `CUDA_VISIBLE_DEVICES=0` **before** importing torch.
+- **Lost weights:** relative `project=` + session resets left empty output zips. Fix: absolute
+  `project=/kaggle/working/m4`, `save_period=20`, and a guarded bundle cell that refuses to zip without
+  `best.pt`.
+
+---
+
 ## Reproducibility notes
 - Fixed `seed=42` across runs.
 - Full epoch-by-epoch logs: each model's `results/.../results.csv`.
