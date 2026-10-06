@@ -1,30 +1,28 @@
 # DentalX — Multi-Model Dental Image Analysis
 
-An offline, multi-model deep-learning system for automated dental image analysis. DentalX bundles four
-independent, production-ready models — panoramic X-ray analysis, smartphone occlusal-caries screening,
-view-robust intraoral tooth-type detection, and gingival-inflammation (gingivitis) screening — each trained on
-real dental datasets and runnable on a clinic PC.
+An offline, multi-model deep-learning system for automated dental image analysis. DentalX bundles three
+independent, production-ready models — smartphone occlusal-caries screening, view-robust intraoral
+tooth-type detection, and gingival-inflammation (gingivitis) screening — each trained on real dental
+datasets and runnable on a clinic PC.
 
 > **Research prototype / AI screening aid — not a diagnostic device.**
 
 ![Python](https://img.shields.io/badge/Python-3.10--3.12-blue)
 ![Framework](https://img.shields.io/badge/framework-YOLO11-green)
 ![License](https://img.shields.io/badge/code-MIT-lightgrey)
-![Status](https://img.shields.io/badge/models-4%2F4%20trained-success)
+![Status](https://img.shields.io/badge/models-3%2F3%20trained-success)
 
 ---
 
 ## Overview
 
-Dental images come in very different forms — panoramic X-rays, intraoral photos, occlusal (biting-surface)
-shots — and each needs its own model. DentalX provides four:
+Dental images come in very different forms — intraoral photos, occlusal (biting-surface) shots, mobile
+snaps — and each task needs its own model. DentalX provides three:
 
-1. **Panoramic X-ray (OPG):** numbers every tooth (FDI) and flags findings (caries, deep caries, periapical
-   lesions, impacted teeth).
-2. **Occlusal caries (smartphone):** detects caries on intraoral photos and grades ICDAS-derived severity.
-3. **Tooth type (intraoral):** labels each tooth incisor / canine / premolar / molar — **view-robust** across
+1. **Occlusal caries (smartphone):** detects caries on intraoral photos and grades ICDAS-derived severity.
+2. **Tooth type (intraoral):** labels each tooth incisor / canine / premolar / molar — **view-robust** across
    frontal, upper-occlusal and lower-occlusal photos.
-4. **Gingival inflammation (intraoral / mobile):** detects inflamed-gum regions (erythema, edema, visible
+3. **Gingival inflammation (intraoral / mobile):** detects inflamed-gum regions (erythema, edema, visible
    bleeding-on-probing) — a single `gingivitis` screening signal, view-robust across frontal / upper / lower.
 
 ---
@@ -34,11 +32,10 @@ shots — and each needs its own model. DentalX provides four:
 ```
             ┌────────────────────────── DentalX ──────────────────────────┐
             │                                                              │
- X-ray  ───▶│  Model 1 · OPG        → teeth + FDI numbering + findings     │
- photo  ───▶│  Model 2 · Occlusal   → caries boxes + ICDAS severity        │
- photo  ───▶│  Model 3 · Tooth type → incisor / canine / premolar / molar  │
+ photo  ───▶│  Model 1 · Occlusal   → caries boxes + ICDAS severity        │
+ photo  ───▶│  Model 2 · Tooth type → incisor / canine / premolar / molar  │
             │                          (frontal + upper + lower views)     │
- photo  ───▶│  Model 4 · Gingivitis → inflamed-gum regions (screening)     │
+ photo  ───▶│  Model 3 · Gingivitis → inflamed-gum regions (screening)     │
             └──────────────────────────────────────────────────────────────┘
                     each model: detect → annotate → JSON + overlay
 ```
@@ -56,21 +53,21 @@ DentalX/
 │   └── evaluate.ipynb           # unified evaluation across all 3 models
 ├── tools/
 │   └── evaluate.py              # per-model eval (per-class P/R/F1 + confusion + leakage)
-├── model1_opg/
-│   ├── train.ipynb              # cell-by-cell training
-│   ├── evaluate.ipynb           # cell-by-cell evaluation
-│   ├── models/                  # trained weights (.pt / .onnx)
-│   ├── outputs/                 # metrics, curves, confusion matrices
-│   ├── code/                    # analyze.py, api/, dentassist package
-│   └── test_images/             # drop photos here → test_images/results/
-├── model2_occlusal/             # same layout
-├── model3_tooth_type/           # same layout
-├── model4_gingival/             # same layout (gingivitis)
-├── README.md · TRAINING_LOG.md · RESEARCH_EVALUATION.md
+├── model1_occlusal/
+│   ├── code/                    # occ_*.py pipeline, api/, dentassist/occlusal package
+│   ├── models/ · outputs/ · notebooks/ · test_images/
+│   └── START_HERE.txt           # (holds the shared .venv under code/.venv)
+├── model2_tooth_type/           # same layout
+│   ├── train.ipynb · evaluate.ipynb
+│   └── models/ · outputs/ · code/ · test_images/
+├── model3_gingival/             # same layout (gingivitis)
+│   ├── train.ipynb · evaluate.ipynb
+│   └── models/ · outputs/ · code/ · test_images/
+├── README.md · TRAINING_LOG.md · RESEARCH_EVALUATION.md · datasets.md
 ```
 
-Every model follows the **same layout** — `train.ipynb`, `evaluate.ipynb`, `models/`, `outputs/`, `code/`.
-Learn one, use all four.
+Every model follows the **same layout** — `models/`, `outputs/`, `code/`, `test_images/` (Models 2 & 3 also
+ship cell-by-cell `train.ipynb` / `evaluate.ipynb`). Learn one, use all three.
 
 ---
 
@@ -78,10 +75,9 @@ Learn one, use all four.
 
 | Model | Dataset | Licence | Notes |
 |-------|---------|---------|-------|
-| Model 1 | DENTEX (panoramic) | CC BY-NC-SA 4.0 | FDI numbering + findings |
-| Model 2 | Zenodo 14769743 (smartphone caries) | CC BY | caries boxes + ICDAS severity; 1,882 photos / 22,824 regions |
-| Model 3 | DentalMate6v Front/Upper/Lower Intraoral (CC BY 4.0) | CC BY 4.0 | multi-view; FDI remapped to 4 tooth types |
-| Model 4 | sampling/gingivitis + Pranta/gum-disease (Roboflow Universe) | CC BY 4.0 | merged to one `gingivitis` class; 571 imgs / 1,508 boxes |
+| Model 1 | Zenodo 14769743 (smartphone caries) + Roboflow ICDAS II | CC BY 4.0 | caries boxes + ICDAS severity; 1,882 photos / 22,824 regions |
+| Model 2 | DentalMate6v Front/Upper/Lower Intraoral | CC BY 4.0 | multi-view; FDI remapped to 4 tooth types |
+| Model 3 | sampling/gingivitis + Pranta/gum-disease (Roboflow Universe) | CC BY 4.0 | merged to one `gingivitis` class; 571 imgs / 1,508 boxes |
 
 ---
 
@@ -89,14 +85,12 @@ Learn one, use all four.
 
 | Model | Architecture | imgsz | Epochs | Test mAP@50 |
 |-------|--------------|-------|--------|-------------|
-| Model 1 — teeth + FDI | YOLO11s detect | 1024 | 150 (early 38) | **0.964** |
-| Model 1 — findings | YOLO11s detect | 1024 | 150 (early 82) | ~0.54 |
-| Model 2 — caries detector | YOLO detect | 640 | 100 | **0.824** (internal); ext. val sens **1.00** |
-| Model 3 — tooth type | YOLO11s (4 cls) | 640 | 100 (early 86) | **0.946** |
-| Model 4 — gingivitis | YOLO11s (1 cls) | 640 | 120 | **0.804** (validation) |
+| Model 1 — caries detector | YOLO detect | 640 | 100 | **0.824** (internal); ext. val sens **1.00** |
+| Model 2 — tooth type | YOLO11s (4 cls) | 640 | 100 (early 86) | **0.946** |
+| Model 3 — gingivitis | YOLO11s (1 cls) | 640 | 120 | **0.804** (validation) |
 
-**Model 3 per-view (view-robust):** frontal 0.949 · upper 0.947 · lower 0.945.
-**Model 4** figure is the held-out **validation** mAP@50 (best epoch 99/120); loose region-level boxes in the
+**Model 2 per-view (view-robust):** frontal 0.949 · upper 0.947 · lower 0.945.
+**Model 3** figure is the held-out **validation** mAP@50 (best epoch 99/120); loose region-level boxes in the
 source data cap mAP@50-95 (0.369). Full numbers and epoch-by-epoch logs in `TRAINING_LOG.md` and each model's
 `outputs/`.
 
@@ -113,12 +107,12 @@ source data cap mAP@50-95 (0.369). Full numbers and epoch-by-epoch logs in `TRAI
 
 ## Setup & Installation
 
-All three models share **one Python environment**.
+All three models share **one Python environment** (lives under `model1_occlusal/code/.venv`).
 
 ```bat
 :: 1) install Python 3.10–3.12 (tick "Add to PATH")
 :: 2) create the shared environment (once):
-cd D:\Works\DentalX\model1_opg\code
+cd D:\Works\DentalX\model1_occlusal\code
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r ..\..\requirements.txt
@@ -138,20 +132,20 @@ Per model, three ways to run (identical shape across all three):
 <model>\code\windows\analyze_image.bat
 
 :: C) local API:
-<model>\code\windows\run_api.bat       ::  M1 :8000  M2 :8002  M3 :8003  M4 :8004
+<model>\code\windows\run_api.bat       ::  M1 :8001  M2 :8002  M3 :8003
 ```
 
-Retrain any model from its notebook:
+Retrain Models 2 & 3 from their notebooks:
 `<model>/train.ipynb` → `<model>/evaluate.ipynb` → unified `testing/evaluate.ipynb`.
+Retrain Model 1 from `model1_occlusal/notebooks/`.
 
 ---
 
 ## Progress
 
-- [x] Model 1 — panoramic X-ray (FDI + findings)
-- [x] Model 2 — occlusal caries + ICDAS severity + external validation
-- [x] Model 3 — view-robust tooth-type detection (frontal + upper + lower)
-- [x] Model 4 — gingival-inflammation (gingivitis) screening
+- [x] Model 1 — occlusal caries + ICDAS severity + external validation
+- [x] Model 2 — view-robust tooth-type detection (frontal + upper + lower)
+- [x] Model 3 — gingival-inflammation (gingivitis) screening
 - [x] Per-class P/R/F1, confusion matrices, training logs (`TRAINING_LOG.md`)
 - [ ] Data-leakage check across all datasets (`tools/evaluate.py`)
 - [ ] Result-stability (multi-seed / bootstrap CI)
@@ -162,16 +156,16 @@ Retrain any model from its notebook:
 
 ## Environment
 
-Python 3.10–3.12 · Ultralytics ≥ 8.3.0 · PyTorch (CUDA for training; CPU fine for inference). NumPy < 2.0 for Models 1–3; Model 4 was trained on Kaggle's NumPy 2.x + current Ultralytics (inference works on either).
+Python 3.10–3.12 · Ultralytics ≥ 8.3.0 · PyTorch (CUDA for training; CPU fine for inference). NumPy < 2.0 for
+Models 1–2; Model 3 was trained on Kaggle's NumPy 2.x + current Ultralytics (inference works on either).
 
 ---
 
 ## References
 
-- DENTEX panoramic dental dataset.
-- Zenodo smartphone caries dataset (record 14769743).
-- DentalMate6v Front / Upper / Lower Intraoral Tooth Numbering datasets (Roboflow Universe, CC BY 4.0) — credited for Model 3's multi-view training data.
-- sampling/gingivitis-6uyts and Pranta/gum-disease-mmzcr (Roboflow Universe, CC BY 4.0) — credited for Model 4's gingivitis training data.
+- Zenodo smartphone caries dataset (record 14769743) + Roboflow "Caries Classification ICDAS II" — Model 1.
+- DentalMate6v Front / Upper / Lower Intraoral Tooth Numbering datasets (Roboflow Universe, CC BY 4.0) — credited for Model 2's multi-view training data.
+- sampling/gingivitis-6uyts and Pranta/gum-disease-mmzcr (Roboflow Universe, CC BY 4.0) — credited for Model 3's gingivitis training data.
 - Ultralytics YOLO11.
 
 ---

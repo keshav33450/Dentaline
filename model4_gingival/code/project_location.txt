@@ -1,3 +1,0 @@
-Model 4 - gingival inflammation (gingivitis) detector.
-Data: merged public CC BY 4.0 Roboflow datasets - sampling/gingivitis-6uyts + Pranta/gum-disease-mmzcr.
-Single class: gingivitis. Offline YOLO11s best.pt (no API key needed).

@@ -1,7 +1,0 @@
-weights/
-runs/
-results/
-data/
-*.pt
-*.onnx
-__pycache__/

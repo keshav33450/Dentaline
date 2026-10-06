@@ -10,8 +10,8 @@ Produces, for a trained model + its data.yaml:
   - a data-leakage check: exact + near-duplicate image hashes shared across train/val/test
 
 Usage:
-  python tools/evaluate.py --weights model3_tooth_type/weights/best.pt \
-                           --data /path/to/data.yaml --out model3_tooth_type/results --runs 1000
+  python tools/evaluate.py --weights model2_tooth_type/models/best.pt \
+                           --data /path/to/data.yaml --out model2_tooth_type/outputs --runs 1000
 
 Nothing here fabricates numbers: every value is computed from the given weights + data.
 """

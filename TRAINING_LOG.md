@@ -7,24 +7,7 @@ confusion matrices live under each model's `results/` folder.
 
 ---
 
-## Model 1 — Panoramic X-ray (OPG)
-
-Two YOLO11s detectors: **teeth + FDI numbering** and **findings** (caries / deep caries / periapical /
-impacted). Dataset: DENTEX.
-
-**Config:** `yolo11s.pt`, imgsz 1024, batch 8, epochs 150 (early-stopped).
-
-| Sub-model | Epochs run | Final P | Final R | mAP@50 | mAP@50-95 | Log |
-|-----------|-----------|---------|---------|--------|-----------|-----|
-| Teeth + FDI | 38 (early stop) | 0.918 | 0.915 | 0.930 (val) / **0.964 (test)** | 0.549 | `results/training_curves_teeth/results.csv` |
-| Findings | 82 (early stop) | 0.539 | 0.615 | 0.541 | 0.361 | `results/training_curves_findings/results.csv` |
-
-Test (held-out) overall: **teeth mAP@50 0.964**, findings mAP@50 ≈ 0.54. Per-class P/R/mAP in
-`results/metrics.json`; confusion matrices in `results/teeth_test/` and `results/findings_test/`.
-
----
-
-## Model 2 — Occlusal caries (smartphone)
+## Model 1 — Occlusal caries (smartphone)
 
 YOLO caries **detector** + EfficientNet-B0 / MobileNet-V3 **severity** grader (ICDAS-derived).
 Dataset: Zenodo 14769743 smartphone caries.
@@ -47,7 +30,7 @@ R 0.736.
 
 ---
 
-## Model 3 — Tooth type (intraoral, view-robust)
+## Model 2 — Tooth type (intraoral, view-robust)
 
 YOLO11s, 4 tooth-type classes (incisor/canine/premolar/molar), trained on merged multi-view data:
 DentalMate6v **Front + Upper + Lower** Intraoral Tooth Numbering (CC BY 4.0), FDI remapped to 4 types.
@@ -81,7 +64,7 @@ occlusal images. Full log: `results/results.csv`; curves + confusion matrix in `
 > 7-class 0.653 on tooth-labelling). This multi-view model is the current Model 3.
 
 
-## Model 4 — Gingival inflammation (gingivitis)
+## Model 3 — Gingival inflammation (gingivitis)
 
 YOLO11s, single class `gingivitis`, trained on two merged public datasets:
 **sampling/gingivitis-6uyts** (468 imgs, detection) + **Pranta/gum-disease-mmzcr** (segmentation;

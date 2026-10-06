@@ -1,9 +1,0 @@
-{
-  "teeth": 0.4,
-  "floor": 0.3,
-  "findings": {"caries": 0.5, "deep_caries": 0.5, "periapical_lesion": 0.5, "impacted": 0.5},
-  "preprocess": "none",
-  "source": "clinical operating point: 'likely' >= 0.50 for every finding, 0.30-0.50 = 'Possible - needs review', < 0.30 hidden. Preprocessing 'none' chosen on DENTEX validation (macro-F1 0.605 vs 0.549 with CLAHE).",
-  "calibrated_f1_optimal": {"caries": 0.2, "deep_caries": 0.35, "periapical_lesion": 0.5, "impacted": 0.5,
-    "note": "F1-optimal on 50 validation X-rays; caries 0.20 maximises F1 but calls many low-confidence boxes 'likely', so the clinical point above is used. See results/v2/CALIBRATION.md."}
-}

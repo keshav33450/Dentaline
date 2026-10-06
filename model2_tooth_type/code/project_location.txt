@@ -1,0 +1,1 @@
+Model 2 - tooth-type detector. Roboflow project: keshav-raja/dental_dataset_level2-fazpu (v1).

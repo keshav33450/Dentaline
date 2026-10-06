@@ -14,15 +14,15 @@ reproducible plan to close each gap. It responds point-by-point to external revi
 
 | # | Pipeline | Task | Status |
 |---|----------|------|--------|
-| 1 | Panoramic X-ray (OPG) | detection + FDI numbering + findings | trained; evaluation artifacts to be regenerated |
-| 2 | Occlusal caries (smartphone) | caries detection + ICDAS severity | trained; external validation reported, needs full per-class export |
-| 3 | Tooth type (intraoral) | 7-class FDI tooth-type detection | trained; **full artifacts present** (confusion matrix, curves, per-class) |
+| 1 | Occlusal caries (smartphone) | caries detection + ICDAS severity | trained; external validation reported, needs full per-class export |
+| 2 | Tooth type (intraoral) | view-robust 4-class tooth-type detection | trained; **full artifacts present** (confusion matrix, curves, per-class) |
+| 3 | Gingival inflammation | single-class gingivitis screening | trained; validation mAP@50 0.804, test eval reproducible via `evaluate.ipynb` |
 
 ---
 
 ## 2. Evidence currently on hand
 
-| Evidence item | M1 | M2 | M3 |
+| Evidence item | M1 (occlusal) | M2 (tooth) | M3 (gingival) |
 |---|----|----|----|
 | Overall mAP@50 / mAP@50-95 | ✅ | ✅ | ✅ |
 | Per-class mAP | partial | partial | ✅ |
@@ -39,7 +39,11 @@ Legend: ✅ present · ⚠️ partial · ❌ missing
 
 ---
 
-## 3. Model 3 — current full results (test split)
+## 3. Earlier 7-class tooth-type results (superseded)
+
+> **Note:** the table below is the earlier **7-class** tooth-labelling variant. The current Model 2
+> (tooth type) is the **view-robust 4-class** model — overall test **mAP@50 0.946** — documented in
+> `TRAINING_LOG.md`. This section is kept for the per-class / FP-FN discussion only.
 
 7-class FDI tooth-type model, YOLO11s, tooth-labelling dataset. Test split: 42 images, 758 teeth.
 
@@ -77,9 +81,9 @@ fabricated.
 
 ### 4.1 Per-class P / R / F1 for every model
 ```bash
-python tools/evaluate.py --weights model1_opg/weights/best.pt --data <m1_data.yaml> --out model1_opg/results
-python tools/evaluate.py --weights model2_occlusal/weights/best.pt --data <m2_data.yaml> --out model2_occlusal/results
-python tools/evaluate.py --weights model3_tooth_type/weights/best.pt --data <m3_data.yaml> --out model3_tooth_type/results
+python tools/evaluate.py --weights model1_occlusal/models/best.pt --data <m1_data.yaml> --out model1_occlusal/outputs
+python tools/evaluate.py --weights model2_tooth_type/models/best.pt --data <m2_data.yaml> --out model2_tooth_type/outputs
+python tools/evaluate.py --weights model3_gingival/models/best.pt --data <m3_data.yaml> --out model3_gingival/outputs
 ```
 Output: `per_class_metrics.csv`, `evaluation_full.json`.
 
@@ -94,9 +98,9 @@ model in the table below (fill from Kaggle run headers):
 
 | Model | GPU | Epochs | Wall-clock | Log file |
 |-------|-----|--------|-----------|----------|
-| M1 | T4×2 | — | — | `model1_opg/results/train.log` |
-| M2 | T4×2 | — | — | `model2_occlusal/results/train.log` |
-| M3 | T4 | 100 (early-stop) | — | `model3_tooth_type/results/results.csv` |
+| M1 | T4×2 | — | — | `model1_occlusal/outputs/` |
+| M2 | T4 | 100 (early-stop) | — | `model2_tooth_type/outputs/results.csv` |
+| M3 | T4 | 120 | ~25 min | `model3_gingival/outputs/results.csv` |
 
 ### 4.4 Data-leakage & reproducibility
 - Leakage: `tools/evaluate.py` hashes every image and reports any identical image shared across
