@@ -41,7 +41,10 @@ HOSTED_WORKFLOW_ID = "dental_dataset_level2-fazpu"        # live workflow endpoi
 HOSTED_URL = "https://serverless.roboflow.com"
 
 # local YOLO11 .pt (produced by notebooks/train_model3_kaggle.ipynb) - offline, no API key.
-DEFAULT_WEIGHTS = str(Path(__file__).resolve().parents[2] / "models" / "best.pt")
+_WEIGHTS_LOCAL = Path(__file__).resolve().parents[1] / "models" / "best.pt"
+_WEIGHTS_LEGACY = Path(__file__).resolve().parents[2] / "models" / "best.pt"
+DEFAULT_WEIGHTS = str(_WEIGHTS_LOCAL if _WEIGHTS_LOCAL.exists() else _WEIGHTS_LEGACY)
+_YOLO_CACHE = {}
 
 # one stable colour per tooth type (BGR)
 TYPE_COLORS = {"incisor": (66, 133, 244), "canine": (219, 68, 55),
@@ -100,11 +103,18 @@ def _infer_hosted(image_path, workflow_id, api_key, conf):
     return [p for p in preds if p.get("confidence", 0) >= conf]
 
 
-def _infer_weights(image_path, weights_path, conf):
+def _get_yolo(weights_path):
+    key = str(Path(weights_path).resolve())
+    if key not in _YOLO_CACHE:
+        from ultralytics import YOLO
+        _YOLO_CACHE[key] = YOLO(key)
+    return _YOLO_CACHE[key]
+
+
+def _infer_weights(image, weights_path, conf):
     """Local YOLO11 .pt via ultralytics - fully offline, no API key. Returns Roboflow-shaped dicts."""
-    from ultralytics import YOLO
-    model = YOLO(weights_path)
-    r = model.predict(str(image_path), conf=conf, verbose=False)[0]
+    model = _get_yolo(weights_path)
+    r = model.predict(image, conf=conf, verbose=False)[0]
     out = []
     if r.boxes is not None:
         names = model.names
@@ -118,8 +128,8 @@ def _infer_weights(image_path, weights_path, conf):
     return out
 
 
-def run(image_path, backend="weights", api_key=None, conf=0.4, model_id=None, weights=None):
-    img = cv2.imread(str(image_path))
+def run(image_path=None, backend="weights", api_key=None, conf=0.4, model_id=None, weights=None, image_bgr=None):
+    img = image_bgr if image_bgr is not None else cv2.imread(str(image_path))
     if img is None:
         raise SystemExit(f"cannot read {image_path}")
 
@@ -128,7 +138,7 @@ def run(image_path, backend="weights", api_key=None, conf=0.4, model_id=None, we
         if not Path(wp).exists():
             raise SystemExit(f"no local weights at {wp} - train with notebooks/train_model3_kaggle.ipynb, "
                              f"or use --backend hosted / --backend local")
-        preds = _infer_weights(image_path, wp, conf)
+        preds = _infer_weights(img, wp, conf)
     else:
         api_key = api_key or os.environ.get("ROBOFLOW_API_KEY", "")
         if not api_key:
@@ -143,6 +153,7 @@ def run(image_path, backend="weights", api_key=None, conf=0.4, model_id=None, we
     for t in teeth:
         counts[t["type"]] = counts.get(t["type"], 0) + 1
     res = {"backend": backend, "n_teeth": len(teeth), "counts": counts, "teeth": teeth,
+           "image_size": [int(img.shape[1]), int(img.shape[0])],
            "disclaimer": "Research prototype - not a diagnostic system."}
     return img, res
 

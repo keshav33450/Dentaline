@@ -42,6 +42,15 @@ snaps — and each task needs its own model. DentalX provides three:
 
 ---
 
+## Application — DentalX Camp
+
+`camp_web/` is a full-stack (React + FastAPI + MongoDB) screening app that runs all three models on one
+intraoral photo, returns independent model status and findings, and lets a doctor review and document each
+patient case. It can generate a PDF and optionally e-mail it through configured SMTP. Set up with
+`camp_web/README.md`, then run `run_app.bat` → opens http://localhost:8080.
+
+---
+
 ## Project Structure
 
 ```
@@ -63,6 +72,7 @@ DentalX/
 ├── model3_gingival/             # same layout (gingivitis)
 │   ├── train.ipynb · evaluate.ipynb
 │   └── models/ · outputs/ · code/ · test_images/
+├── camp_web/                    # DentalX Camp — React + FastAPI app (all 3 models)
 ├── README.md · TRAINING_LOG.md · RESEARCH_EVALUATION.md · datasets.md
 ```
 
@@ -150,7 +160,7 @@ Retrain Model 1 from `model1_occlusal/notebooks/`.
 - [ ] Data-leakage check across all datasets (`tools/evaluate.py`)
 - [ ] Result-stability (multi-seed / bootstrap CI)
 - [ ] Ablation studies per model
-- [ ] Unified web frontend
+- [x] DentalX Camp web app (React + FastAPI orchestration + MongoDB)
 
 ---
 

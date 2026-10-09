@@ -22,16 +22,26 @@ from pathlib import Path
 import cv2
 
 # local YOLO11 .pt (produced by notebooks/train_model4_kaggle.ipynb) - offline, no API key.
-DEFAULT_WEIGHTS = str(Path(__file__).resolve().parents[2] / "models" / "best.pt")
+_WEIGHTS_LOCAL = Path(__file__).resolve().parents[1] / "models" / "best.pt"
+_WEIGHTS_LEGACY = Path(__file__).resolve().parents[2] / "models" / "best.pt"
+DEFAULT_WEIGHTS = str(_WEIGHTS_LOCAL if _WEIGHTS_LOCAL.exists() else _WEIGHTS_LEGACY)
+_YOLO_CACHE = {}
 
 GINGIVITIS_COLOR = (0, 0, 255)   # BGR red - inflamed-gum box
 
 
-def _infer_weights(image_path, weights_path, conf):
+def _get_yolo(weights_path):
+    key = str(Path(weights_path).resolve())
+    if key not in _YOLO_CACHE:
+        from ultralytics import YOLO
+        _YOLO_CACHE[key] = YOLO(key)
+    return _YOLO_CACHE[key]
+
+
+def _infer_weights(image, weights_path, conf):
     """Local YOLO11 .pt via ultralytics - fully offline. Returns Roboflow-shaped dicts."""
-    from ultralytics import YOLO
-    model = YOLO(weights_path)
-    r = model.predict(str(image_path), conf=conf, verbose=False)[0]
+    model = _get_yolo(weights_path)
+    r = model.predict(image, conf=conf, verbose=False)[0]
     out = []
     if r.boxes is not None:
         names = model.names
@@ -58,15 +68,15 @@ def _to_regions(preds: list[dict]) -> list[dict]:
     return sorted(regions, key=lambda r: -r["confidence"])
 
 
-def run(image_path, backend="weights", conf=0.4, weights=None):
-    img = cv2.imread(str(image_path))
+def run(image_path=None, backend="weights", conf=0.4, weights=None, image_bgr=None):
+    img = image_bgr if image_bgr is not None else cv2.imread(str(image_path))
     if img is None:
         raise SystemExit(f"cannot read {image_path}")
 
     wp = weights or DEFAULT_WEIGHTS
     if not Path(wp).exists():
         raise SystemExit(f"no local weights at {wp} - train with notebooks/train_model4_kaggle.ipynb")
-    preds = _infer_weights(image_path, wp, conf)
+    preds = _infer_weights(img, wp, conf)
     regions = _to_regions(preds)
 
     top = max((r["confidence"] for r in regions), default=0.0)
@@ -76,6 +86,7 @@ def run(image_path, backend="weights", conf=0.4, weights=None):
         "gingivitis_detected": len(regions) > 0,
         "max_confidence": round(top, 3),
         "regions": regions,
+        "image_size": [int(img.shape[1]), int(img.shape[0])],
         "disclaimer": "Research prototype / screening aid - not a diagnosis.",
     }
     return img, res

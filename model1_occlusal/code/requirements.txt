@@ -1,11 +1,9 @@
+# CPU-only wheels avoid installing CUDA libraries in the Vercel function bundle.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.5.1+cpu
+torchvision==0.20.1+cpu
 ultralytics>=8.3.0
-onnx>=1.15
-onnxslim
-onnxruntime>=1.17
-opencv-python-headless>=4.8
-numpy
-huggingface_hub>=0.23
-pydicom>=2.4
+opencv-python-headless>=4.8,<4.12
+numpy<2.0
 fastapi>=0.110
-uvicorn[standard]>=0.29
-python-multipart
+python-multipart>=0.0.9

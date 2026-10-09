@@ -24,7 +24,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from dentassist import paths as P  # noqa: E402
-from dentassist.occlusal.preprocess import preprocess, quality_check  # noqa: E402
+from dentassist.occlusal.preprocess import quality_check  # noqa: E402
 
 LABEL = {"no_caries": "No caries", "mild": "Mild caries", "moderate": "Moderate caries", "advanced": "Advanced caries"}
 COLOR = {"no_caries": (90, 180, 60), "mild": (0, 215, 255), "moderate": (0, 130, 255), "advanced": (40, 40, 220), "caries": (0, 165, 255)}  # BGR
@@ -46,6 +46,11 @@ def _grade(sev_model, img_rgb_crop, imgsz=224):
     """severity model on a tooth/lesion crop -> (severity, confidence). Handles cls or det checkpoints."""
     if sev_model is None or img_rgb_crop.size == 0:
         return None, None
+    # Our severity checkpoints are native DentAssist classifiers, not Ultralytics YOLO files.
+    if hasattr(sev_model, "classes") and not hasattr(sev_model, "names"):
+        probs = sev_model.predict([cv2.cvtColor(img_rgb_crop, cv2.COLOR_RGB2BGR)])[0]
+        i = int(np.argmax(probs))
+        return str(sev_model.classes[i]), round(float(probs[i]), 3)
     r = sev_model.predict(img_rgb_crop, imgsz=imgsz, verbose=False)[0]
     if getattr(r, "probs", None) is not None:                     # classifier
         i = int(r.probs.top1); return r.names[i], round(float(r.probs.top1conf), 3)
@@ -55,27 +60,37 @@ def _grade(sev_model, img_rgb_crop, imgsz=224):
     return None, None
 
 
-def analyze(model, img_bgr, floor=0.30, likely=0.50, imgsz=1024, sev_model=None):
+def trained_imgsz(model, default=640):
+    ckpt = getattr(model, "ckpt", None) or {}
+    args = ckpt.get("train_args") or {}
+    v = args.get("imgsz") or default
+    return int(v[0] if isinstance(v, (list, tuple)) else v)
+
+
+def analyze(model, img_bgr, floor=0.30, likely=0.50, imgsz=None, sev_model=None):
     """model = caries detector (class 'caries') OR the 4-class severity detector.
-    If it is the caries detector and sev_model is given, each lesion box is graded for severity."""
+    If it is the caries detector and sev_model is given, each lesion box is graded for severity.
+    Detection runs on the original photo so boxes match the pixels the camp overlay draws on."""
     q = quality_check(img_bgr)
-    img = preprocess(img_bgr)
+    img = img_bgr
+    if imgsz is None:
+        imgsz = trained_imgsz(model)
     r = model.predict(img, conf=floor, iou=0.5, imgsz=imgsz, verbose=False)[0]
     caries_mode = set(model.names.values()) == {"caries"}
     dets = []
     if r.boxes is not None:
         for b, c, cf in zip(r.boxes.xyxy.cpu().numpy(), r.boxes.cls.cpu().numpy().astype(int), r.boxes.conf.cpu().numpy()):
             box = [round(float(v), 1) for v in b]
-            if caries_mode:
-                sev, sconf = "caries", None
-                if sev_model is not None:
-                    x0, y0, x1, y1 = [int(max(0, v)) for v in box]
-                    sv, sc = _grade(sev_model, cv2.cvtColor(img[y0:y1, x0:x1], cv2.COLOR_BGR2RGB))
+            rec = {"severity": r.names[int(c)] if not caries_mode else "caries",
+                   "box": box, "bbox": box, "confidence": round(float(cf), 3), "severity_conf": None}
+            if caries_mode and sev_model is not None:
+                x0, y0, x1, y1 = [int(max(0, v)) for v in box]
+                crop = img[y0:y1, x0:x1]
+                if crop.size:
+                    sv, sc = _grade(sev_model, cv2.cvtColor(crop, cv2.COLOR_BGR2RGB))
                     if sv and sv != "no_caries":
-                        sev, sconf = sv, sc
-                dets.append({"severity": sev, "box": box, "confidence": round(float(cf), 3), "severity_conf": sconf})
-            else:
-                dets.append({"severity": r.names[int(c)], "box": box, "confidence": round(float(cf), 3), "severity_conf": None})
+                        rec["severity"], rec["severity_conf"] = sv, sc
+            dets.append(rec)
     # overlapping boxes -> keep the more confident (class-agnostic NMS)
     kept = []
     for d in sorted(dets, key=lambda d: -d["confidence"]):
@@ -96,7 +111,8 @@ def analyze(model, img_bgr, floor=0.30, likely=0.50, imgsz=1024, sev_model=None)
         "sound_teeth": [d for d in kept if d["severity"] == "no_caries"],
         "summary": {k: sum(d["severity"] == k for d in kept) for k in list(LABEL) + ["caries"]},
         "highest": worst["display"] if worst else "No caries detected",
-        "settings": {"hidden_below": floor, "likely_from": likely},
+        "settings": {"hidden_below": floor, "likely_from": likely, "imgsz": imgsz},
+        "image_size": [int(img.shape[1]), int(img.shape[0])],
         "disclaimer": "AI screening aid - not a diagnosis. Confirm clinically (ICDAS).",
     }
 
@@ -197,10 +213,16 @@ def main():
     from ultralytics import YOLO
     model = YOLO(str(wpath))
     sev_model = None
-    for cand in [a.severity, str(P.WEIGHTS / "occlusal_severity_efficientnet_b0.pt"), str(P.WEIGHTS / "occlusal_det.pt")]:
+    for cand in [a.severity, str(P.WEIGHTS / "occlusal_severity_efficientnet_b0.pt"),
+                 str(P.WEIGHTS / "occlusal_severity_mobilenet_v3.pt"), str(P.WEIGHTS / "occlusal_det.pt")]:
         if cand and Path(cand).exists() and Path(cand).resolve() != wpath.resolve():
-            sev_model = YOLO(cand); break
-    imgsz = (getattr(model, "ckpt", None) or {}).get("train_args", {}).get("imgsz", 1024)
+            if "severity" in Path(cand).name:
+                from dentassist.occlusal.classifier import Classifier
+                sev_model = Classifier(cand)
+            else:
+                sev_model = YOLO(cand)
+            break
+    imgsz = trained_imgsz(model)
     for f in a.images:
         p = Path(f)
         raw = cv2.imread(str(p))

@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body { @apply bg-[#F8FAFC] text-ink font-sans antialiased; }
+  h1,h2,h3 { @apply font-display tracking-tight; }
+}
+
+@layer components {
+  .pill { @apply inline-flex items-center gap-2 font-display font-semibold rounded-full shadow-sm; }
+  .card { @apply bg-white/70 backdrop-blur-xl border border-white/50 rounded-xl2 shadow-card transition-all duration-300; }
+  .field { @apply w-full px-4 py-3.5 border border-line/80 rounded-xl bg-white/50 text-[15px] outline-none transition-all duration-300 placeholder-muted/60 focus:ring-2 focus:ring-teal/30 focus:border-teal focus:bg-white; }
+  .btn { @apply w-full font-medium text-[16px] py-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2; }
+  .btn-primary { @apply btn bg-gradient-premium text-white shadow-premium hover:shadow-none hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100; }
+  .btn-ghost { @apply btn bg-white/50 backdrop-blur text-teal-dk border border-teal/20 hover:bg-teal-lt/50 active:scale-[0.98]; }
+}
+
+@keyframes rise { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise .4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .rise, .spin { animation: none !important; } }

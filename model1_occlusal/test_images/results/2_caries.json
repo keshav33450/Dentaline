@@ -9,81 +9,65 @@
    "specular_fraction": 0.0013
   }
  },
- "teeth_found": 5,
+ "teeth_found": 2,
+ "mode": "caries+severity",
  "caries": [
   {
    "severity": "advanced",
    "box": [
-    174.6,
-    297.3,
-    300.1,
-    402.6
+    173.7,
+    294.7,
+    300.8,
+    407.6
    ],
-   "confidence": 0.902,
+   "bbox": [
+    173.7,
+    294.7,
+    300.8,
+    407.6
+   ],
+   "confidence": 0.718,
+   "severity_conf": 0.993,
    "status": "likely",
-   "display": "Advanced caries - 90%"
+   "display": "Advanced caries (advanced 99%) - 72%"
   },
   {
    "severity": "moderate",
    "box": [
-    264.0,
-    441.1,
-    348.0,
-    517.8
+    159.4,
+    192.3,
+    281.1,
+    306.6
    ],
-   "confidence": 0.799,
-   "status": "likely",
-   "display": "Moderate caries - 80%"
-  },
-  {
-   "severity": "moderate",
-   "box": [
-    163.5,
-    195.8,
-    280.9,
-    302.0
+   "bbox": [
+    159.4,
+    192.3,
+    281.1,
+    306.6
    ],
-   "confidence": 0.736,
+   "confidence": 0.745,
+   "severity_conf": 0.862,
    "status": "likely",
-   "display": "Moderate caries - 74%"
-  },
-  {
-   "severity": "moderate",
-   "box": [
-    221.6,
-    378.0,
-    325.9,
-    460.0
-   ],
-   "confidence": 0.647,
-   "status": "likely",
-   "display": "Moderate caries - 65%"
+   "display": "Moderate caries (moderate 86%) - 74%"
   }
  ],
- "sound_teeth": [
-  {
-   "severity": "no_caries",
-   "box": [
-    319.4,
-    501.8,
-    394.8,
-    561.0
-   ],
-   "confidence": 0.408,
-   "status": "possible",
-   "display": "Possible no caries - 41% (needs review)"
-  }
- ],
+ "sound_teeth": [],
  "summary": {
-  "no_caries": 1,
+  "no_caries": 0,
   "mild": 0,
-  "moderate": 3,
-  "advanced": 1
+  "moderate": 1,
+  "advanced": 1,
+  "caries": 0
  },
- "highest": "Advanced caries - 90%",
+ "highest": "Advanced caries (advanced 99%) - 72%",
  "settings": {
   "hidden_below": 0.3,
-  "likely_from": 0.5
+  "likely_from": 0.5,
+  "imgsz": 1024
  },
+ "image_size": [
+  542,
+  564
+ ],
  "disclaimer": "AI screening aid - not a diagnosis. Confirm clinically (ICDAS)."
 }

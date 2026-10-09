@@ -1,0 +1,16 @@
+// vite.config.js
+import { defineConfig } from "file:///sessions/rcw-01yamr3bkq7sjytrcaeccvgn/mnt/DentalX/camp_web/client/node_modules/vite/dist/node/index.js";
+import react from "file:///sessions/rcw-01yamr3bkq7sjytrcaeccvgn/mnt/DentalX/camp_web/client/node_modules/@vitejs/plugin-react/dist/index.js";
+var vite_config_default = defineConfig({
+  plugins: [react()],
+  server: {
+    port: 5173,
+    proxy: { "/api": "http://127.0.0.1:8080" }
+    // dev: proxy API to FastAPI
+  },
+  build: { outDir: "dist" }
+});
+export {
+  vite_config_default as default
+};
+//# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsidml0ZS5jb25maWcuanMiXSwKICAic291cmNlc0NvbnRlbnQiOiBbImNvbnN0IF9fdml0ZV9pbmplY3RlZF9vcmlnaW5hbF9kaXJuYW1lID0gXCIvc2Vzc2lvbnMvcmN3LTAxeWFtcjNia3E3c2p5dHJjYWVjY3Znbi9tbnQvRGVudGFsWC9jYW1wX3dlYi9jbGllbnRcIjtjb25zdCBfX3ZpdGVfaW5qZWN0ZWRfb3JpZ2luYWxfZmlsZW5hbWUgPSBcIi9zZXNzaW9ucy9yY3ctMDF5YW1yM2JrcTdzanl0cmNhZWNjdmduL21udC9EZW50YWxYL2NhbXBfd2ViL2NsaWVudC92aXRlLmNvbmZpZy5qc1wiO2NvbnN0IF9fdml0ZV9pbmplY3RlZF9vcmlnaW5hbF9pbXBvcnRfbWV0YV91cmwgPSBcImZpbGU6Ly8vc2Vzc2lvbnMvcmN3LTAxeWFtcjNia3E3c2p5dHJjYWVjY3Znbi9tbnQvRGVudGFsWC9jYW1wX3dlYi9jbGllbnQvdml0ZS5jb25maWcuanNcIjtpbXBvcnQgeyBkZWZpbmVDb25maWcgfSBmcm9tICd2aXRlJztcbmltcG9ydCByZWFjdCBmcm9tICdAdml0ZWpzL3BsdWdpbi1yZWFjdCc7XG5cbmV4cG9ydCBkZWZhdWx0IGRlZmluZUNvbmZpZyh7XG4gIHBsdWdpbnM6IFtyZWFjdCgpXSxcbiAgc2VydmVyOiB7XG4gICAgcG9ydDogNTE3MyxcbiAgICBwcm94eTogeyAnL2FwaSc6ICdodHRwOi8vMTI3LjAuMC4xOjgwODAnIH0sICAvLyBkZXY6IHByb3h5IEFQSSB0byBGYXN0QVBJXG4gIH0sXG4gIGJ1aWxkOiB7IG91dERpcjogJ2Rpc3QnIH0sXG59KTtcbiJdLAogICJtYXBwaW5ncyI6ICI7QUFBd1gsU0FBUyxvQkFBb0I7QUFDclosT0FBTyxXQUFXO0FBRWxCLElBQU8sc0JBQVEsYUFBYTtBQUFBLEVBQzFCLFNBQVMsQ0FBQyxNQUFNLENBQUM7QUFBQSxFQUNqQixRQUFRO0FBQUEsSUFDTixNQUFNO0FBQUEsSUFDTixPQUFPLEVBQUUsUUFBUSx3QkFBd0I7QUFBQTtBQUFBLEVBQzNDO0FBQUEsRUFDQSxPQUFPLEVBQUUsUUFBUSxPQUFPO0FBQzFCLENBQUM7IiwKICAibmFtZXMiOiBbXQp9Cg==

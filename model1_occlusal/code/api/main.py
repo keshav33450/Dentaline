@@ -1,55 +1,112 @@
-"""Model 2 - occlusal caries API (matches Model 1/3 shape).
+"""Model 1 - occlusal caries API.
 
-  pip install fastapi uvicorn python-multipart
   uvicorn api.main:app --host 127.0.0.1 --port 8001
   POST /analyze  (multipart: file=<occlusal photo>)  -> caries JSON
 """
 from __future__ import annotations
 
+import importlib.util
+import hmac
 import os
 import sys
-import tempfile
 from pathlib import Path
 
 os.environ.setdefault("YOLO_AUTOINSTALL", "false")
 import cv2
-from fastapi import FastAPI, File, UploadFile
+import numpy as np
+from fastapi import FastAPI, File, Header, HTTPException, Query, UploadFile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from dentassist import paths as P  # noqa: E402
 
-# reuse occ_detect's analyze() + model loading
-import importlib.util
 _spec = importlib.util.spec_from_file_location(
     "occ_detect", str(Path(__file__).resolve().parents[1] / "scripts" / "occ_detect.py"))
 _occ = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_occ)
 
-from ultralytics import YOLO  # noqa: E402
-
-_det_path = P.WEIGHTS / "occlusal_caries_det.pt"
-if not _det_path.exists():
-    _det_path = P.WEIGHTS / "occlusal_det.pt"
-_MODEL = YOLO(str(_det_path))
+_DET = None
 _SEV = None
-for _c in [P.WEIGHTS / "occlusal_severity.pt", P.WEIGHTS / "occlusal_severity_efficientnet_b0.pt"]:
-    if _c.exists():
-        _SEV = YOLO(str(_c)); break
+_DET_PATH = None
+_API_KEY = os.getenv("MODEL_API_KEY", "")
 
-app = FastAPI(title="DentalX Model 2 - Occlusal Caries")
+
+def _authorize(authorization: str | None):
+    if _API_KEY and not hmac.compare_digest(authorization or "", f"Bearer {_API_KEY}"):
+        raise HTTPException(401, "missing or invalid bearer token", headers={"WWW-Authenticate": "Bearer"})
+
+
+def _find_det():
+    for p in (P.WEIGHTS / "occlusal_caries_det.pt", P.WEIGHTS / "occlusal_det.pt", P.WEIGHTS / "best.pt"):
+        if p.exists():
+            return p
+    return None
+
+
+def _find_sev(det_path):
+    for p in (P.WEIGHTS / "occlusal_severity.pt", P.WEIGHTS / "occlusal_severity_efficientnet_b0.pt"):
+        if p.exists() and (det_path is None or p.resolve() != det_path.resolve()):
+            return p
+    return None
+
+
+def _models():
+    global _DET, _SEV, _DET_PATH
+    if _DET is None:
+        _DET_PATH = _find_det()
+        if _DET_PATH is None:
+            return None, None
+        from ultralytics import YOLO
+        _DET = YOLO(str(_DET_PATH))
+        sp = _find_sev(_DET_PATH)
+        if sp is not None:
+            try:
+                from dentassist.occlusal.classifier import Classifier
+                _SEV = Classifier(str(sp))
+            except Exception as exc:
+                # Severity grading is optional. If the classifier checkpoint cannot be
+                # loaded (e.g. torch/numpy version drift), fall back to detection-only so
+                # caries boxes are still returned instead of failing the whole request.
+                import logging; logging.getLogger("uvicorn.error").warning(
+                    "Severity classifier disabled (%s: %s) - caries detection still active.",
+                    type(exc).__name__, exc)
+                _SEV = None
+    return _DET, _SEV
+
+
+def _decode(data: bytes):
+    img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
+    if img is None:
+        raise HTTPException(400, "cannot read image")
+    return img
+
+
+app = FastAPI(title="DentalX Model 1 - Occlusal Caries")
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "model": _det_path.name}
+    p = _find_det()
+    if p is None:
+        raise HTTPException(503, f"no caries weights in {P.WEIGHTS}")
+    return {"status": "ok", "model": p.name}
 
 
 @app.post("/analyze")
-async def analyze(file: UploadFile = File(...), floor: float = 0.30, likely: float = 0.50):
-    with tempfile.NamedTemporaryFile(suffix=Path(file.filename or "x.jpg").suffix, delete=False) as tf:
-        tf.write(await file.read()); tmp = tf.name
-    raw = cv2.imread(tmp)
-    if raw is None:
-        return {"error": "cannot read image"}
-    _, res = _occ.analyze(_MODEL, raw, floor, likely, 1024, sev_model=_SEV)
+async def analyze(file: UploadFile = File(...), floor: float = Query(0.30, ge=0.0, le=1.0),
+                  likely: float = Query(0.50, ge=0.0, le=1.0),
+                  authorization: str | None = Header(default=None)):
+    _authorize(authorization)
+    det, sev = _models()
+    if det is None:
+        raise HTTPException(503, f"no caries weights in {P.WEIGHTS}")
+    raw = _decode(await file.read())
+    try:
+        _, res = _occ.analyze(det, raw, floor, likely, None, sev_model=sev)
+    except Exception:
+        # retry once without the severity model, which is the usual failure point
+        try:
+            _, res = _occ.analyze(det, raw, floor, likely, None, sev_model=None)
+        except Exception as exc:
+            import logging; logging.getLogger("uvicorn.error").exception("caries analyze failed")
+            raise HTTPException(500, f"caries analyze failed: {type(exc).__name__}")
     return res

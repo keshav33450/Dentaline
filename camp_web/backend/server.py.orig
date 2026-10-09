@@ -1,0 +1,731 @@
+"""DentalX Camp API: doctor-scoped patient records and concurrent model screening."""
+from __future__ import annotations
+
+import asyncio
+import base64
+import csv
+import hashlib
+import hmac
+import io
+import json
+import logging
+import os
+import re
+import secrets
+import smtplib
+import ssl
+import time
+from contextlib import asynccontextmanager
+from datetime import datetime, timezone
+from email.message import EmailMessage
+from pathlib import Path
+from typing import Any
+
+import cv2
+import httpx
+import numpy as np
+from bson import ObjectId
+from dotenv import load_dotenv
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Request, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
+from pymongo import AsyncMongoClient, ReturnDocument
+
+ROOT = Path(__file__).resolve().parents[1]
+load_dotenv(ROOT / "server" / ".env")
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+log = logging.getLogger("dentalx")
+
+MAX_IMAGE_BYTES = 4 * 1024 * 1024
+DISCLAIMER = (
+    "AI screening aid only — not a diagnosis. Final assessment must be performed by a qualified dental professional."
+)
+IS_PRODUCTION = os.getenv("APP_ENV", "development").lower() == "production"
+MODEL_URLS = {
+    "caries": os.getenv("CARIES_API_URL", os.getenv("MODEL_OCCLUSAL", "" if IS_PRODUCTION else "http://127.0.0.1:8001/analyze")),
+    "tooth": os.getenv("TOOTH_API_URL", os.getenv("MODEL_TOOTH", "" if IS_PRODUCTION else "http://127.0.0.1:8002/analyze")),
+    "gingivitis": os.getenv("GINGIVITIS_API_URL", os.getenv("MODEL_GINGIVITIS", "" if IS_PRODUCTION else "http://127.0.0.1:8003/analyze")),
+}
+MODEL_KEYS = {
+    "caries": os.getenv("CARIES_API_KEY", os.getenv("MODEL_OCCLUSAL_KEY", os.getenv("MODEL_API_KEY", ""))),
+    "tooth": os.getenv("TOOTH_API_KEY", os.getenv("MODEL_TOOTH_KEY", os.getenv("MODEL_API_KEY", ""))),
+    "gingivitis": os.getenv("GINGIVITIS_API_KEY", os.getenv("MODEL_GINGIVITIS_KEY", os.getenv("MODEL_API_KEY", ""))),
+}
+MODEL_TIMEOUT = float(os.getenv("MODEL_TIMEOUT_SECONDS", "90"))
+DB_NAME = os.getenv("DATABASE_NAME", "dentalx_camp")
+
+
+def _b64(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+
+
+def _jwt_encode(payload: dict[str, Any]) -> str:
+    secret = os.getenv("JWT_SECRET", "")
+    if len(secret) < 32:
+        raise HTTPException(503, "Authentication is not configured.")
+    head = _b64(json.dumps({"alg": "HS256", "typ": "JWT"}, separators=(",", ":")).encode())
+    body = _b64(json.dumps(payload, separators=(",", ":")).encode())
+    signing = f"{head}.{body}".encode()
+    sig = hmac.new(secret.encode(), signing, hashlib.sha256).digest()
+    return f"{head}.{body}.{_b64(sig)}"
+
+
+def _jwt_decode(token: str) -> dict[str, Any]:
+    try:
+        head, body, signature = token.split(".")
+        signing = f"{head}.{body}".encode()
+        expected = hmac.new(os.environ["JWT_SECRET"].encode(), signing, hashlib.sha256).digest()
+        padded = signature + "=" * (-len(signature) % 4)
+        if not hmac.compare_digest(expected, base64.urlsafe_b64decode(padded)):
+            raise ValueError("bad signature")
+        payload = json.loads(base64.urlsafe_b64decode(body + "=" * (-len(body) % 4)))
+        if int(payload.get("exp", 0)) <= int(time.time()) or not payload.get("sub"):
+            raise ValueError("expired")
+        return payload
+    except Exception as exc:
+        raise HTTPException(401, "Session expired or invalid. Please sign in again.") from exc
+
+
+def _hash_password(password: str) -> str:
+    salt = secrets.token_bytes(16)
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 310_000)
+    return f"pbkdf2_sha256$310000${_b64(salt)}${_b64(digest)}"
+
+
+def _verify_password(password: str, encoded: str) -> bool:
+    try:
+        scheme, rounds, salt, expected = encoded.split("$")
+        if scheme != "pbkdf2_sha256":
+            return False
+        salt_bytes = base64.urlsafe_b64decode(salt + "=" * (-len(salt) % 4))
+        expected_bytes = base64.urlsafe_b64decode(expected + "=" * (-len(expected) % 4))
+        actual = hashlib.pbkdf2_hmac("sha256", password.encode(), salt_bytes, int(rounds))
+        return hmac.compare_digest(actual, expected_bytes)
+    except (ValueError, TypeError):
+        return False
+
+
+@asynccontextmanager
+async def _mongo_lifecycle(app: FastAPI):
+    uri = os.getenv("MONGODB_URI", "")
+    client = None
+    app.state.db = None
+    if uri:
+        try:
+            client = AsyncMongoClient(uri, serverSelectionTimeoutMS=7000, connectTimeoutMS=7000)
+            await client.admin.command("ping")
+            app.state.db = client[DB_NAME]
+            await _ensure_indexes(app.state.db)
+            log.info("Database connection ready")
+        except Exception as exc:
+            log.warning("Database unavailable (%s)", type(exc).__name__)
+            if client:
+                await client.close()
+                client = None
+    else:
+        log.warning("MONGODB_URI is not configured")
+    app.state.mongo_client = client
+    try:
+        yield
+    finally:
+        if client:
+            await client.close()
+
+
+async def _ensure_indexes(db):
+    await db.doctors.create_index("email", unique=True)
+    await db.patients.create_index("patient_id", unique=True)
+    await db.patients.create_index([("doctor_id", 1), ("name", 1)])
+    await db.screenings.create_index([("doctor_id", 1), ("created_at", -1)])
+    await db.screenings.create_index([("doctor_id", 1), ("patient_id", 1), ("created_at", -1)])
+    await db.reports.create_index([("doctor_id", 1), ("screening_id", 1)], unique=True)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with _mongo_lifecycle(app):
+        yield
+
+
+app = FastAPI(title="DentalX Camp API", version="1.0.0", lifespan=lifespan)
+origins = [origin.strip() for origin in os.getenv("FRONTEND_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",") if origin.strip()]
+app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False,
+                   allow_methods=["GET", "POST", "PATCH"], allow_headers=["Authorization", "Content-Type"])
+
+
+def get_db(request: Request):
+    db = request.app.state.db
+    if db is None:
+        raise HTTPException(503, "Database is unavailable. Check the server connection settings.")
+    return db
+
+
+async def current_doctor(authorization: str | None = Header(default=None), db=Depends(get_db)):
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(401, "Please sign in to continue.")
+    payload = _jwt_decode(authorization[7:].strip())
+    doctor = await db.doctors.find_one({"_id": ObjectId(payload["sub"])})
+    if not doctor:
+        raise HTTPException(401, "Session expired or invalid. Please sign in again.")
+    return doctor
+
+
+class DoctorRegistration(BaseModel):
+    name: str = Field(min_length=2, max_length=100)
+    email: str = Field(min_length=5, max_length=254)
+    password: str = Field(min_length=12, max_length=128)
+
+
+class LoginRequest(BaseModel):
+    email: str = Field(min_length=5, max_length=254)
+    password: str = Field(min_length=1, max_length=128)
+
+
+class PatientRegistration(BaseModel):
+    name: str = Field(min_length=2, max_length=120)
+    age: int = Field(ge=0, le=120)
+    phone: str = Field(min_length=7, max_length=24)
+    email: str = Field(min_length=5, max_length=254)
+
+
+class ReviewUpdate(BaseModel):
+    clinical_notes: str = Field(default="", max_length=5000)
+    assessment: str = Field(default="", max_length=100)
+
+
+def _valid_email(value: str) -> bool:
+    return re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", value.strip()) is not None
+
+
+def _public_doctor(doctor: dict[str, Any]) -> dict[str, str]:
+    return {"id": str(doctor["_id"]), "name": doctor["name"], "email": doctor["email"]}
+
+
+def _issue_token(doctor: dict[str, Any]) -> str:
+    now = int(time.time())
+    return _jwt_encode({"sub": str(doctor["_id"]), "iat": now, "exp": now + 60 * 60 * 12})
+
+
+@app.post("/api/auth/register")
+async def register_doctor(body: DoctorRegistration, db=Depends(get_db)):
+    email = body.email.strip().lower()
+    if not _valid_email(email):
+        raise HTTPException(422, "Enter a valid e-mail address.")
+    if len(body.password) < 12:
+        raise HTTPException(422, "Use a password with at least 12 characters.")
+    doctor = {"name": body.name.strip(), "email": email, "password_hash": _hash_password(body.password),
+              "created_at": datetime.now(timezone.utc)}
+    try:
+        result = await db.doctors.insert_one(doctor)
+    except Exception as exc:
+        if "duplicate" in str(exc).lower():
+            raise HTTPException(409, "An account with this e-mail already exists.") from exc
+        raise HTTPException(503, "Could not create the account. Please try again.") from exc
+    doctor["_id"] = result.inserted_id
+    return {"token": _issue_token(doctor), "doctor": _public_doctor(doctor)}
+
+
+@app.post("/api/auth/login")
+async def login_doctor(body: LoginRequest, db=Depends(get_db)):
+    email = body.email.strip().lower()
+    doctor = await db.doctors.find_one({"email": email})
+    if not doctor or not _verify_password(body.password, doctor.get("password_hash", "")):
+        raise HTTPException(401, "E-mail or password is incorrect.")
+    return {"token": _issue_token(doctor), "doctor": _public_doctor(doctor)}
+
+
+@app.get("/api/auth/me")
+async def get_profile(doctor=Depends(current_doctor)):
+    return {"doctor": _public_doctor(doctor)}
+
+
+@app.post("/api/auth/logout")
+async def logout(doctor=Depends(current_doctor)):
+    return {"ok": True}
+
+
+async def _fetch_model(client: httpx.AsyncClient, name: str, image: bytes, filename: str) -> dict[str, Any]:
+    url = MODEL_URLS[name]
+    if not url:
+        return {"status": "unavailable", "reason": "not_configured"}
+    headers = {"Authorization": f"Bearer {MODEL_KEYS[name]}"} if MODEL_KEYS[name] else {}
+    started = time.perf_counter()
+    try:
+        response = await client.post(url, headers=headers, files={"file": (filename, image, "image/jpeg")})
+        response.raise_for_status()
+        data = response.json()
+        if not isinstance(data, dict):
+            raise ValueError("response was not an object")
+        required = {"caries": "caries", "tooth": "teeth", "gingivitis": "regions"}[name]
+        if not isinstance(data.get(required), list):
+            raise ValueError(f"missing {required} list")
+        return {"status": "available", "data": data, "duration_ms": round((time.perf_counter() - started) * 1000)}
+    except (httpx.HTTPError, ValueError, TypeError) as exc:
+        log.warning("%s model request failed (%s)", name, type(exc).__name__)
+        return {"status": "unavailable", "reason": "request_failed"}
+
+
+async def run_models(image: bytes, filename: str) -> dict[str, Any]:
+    timeout = httpx.Timeout(MODEL_TIMEOUT, connect=min(MODEL_TIMEOUT, 10.0))
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        names = ("caries", "tooth", "gingivitis")
+        results = await asyncio.gather(*(_fetch_model(client, n, image, filename) for n in names))
+    return dict(zip(names, results, strict=True))
+
+
+async def check_model_health() -> dict[str, dict[str, str]]:
+    timeout = httpx.Timeout(4.0, connect=2.0)
+
+    async def check(client, name, url):
+        health_url = re.sub(r"/analyze(?:\?.*)?$", "/health", url)
+        try:
+            response = await client.get(health_url)
+            response.raise_for_status()
+            return name, {"status": "available"}
+        except httpx.HTTPError:
+            return name, {"status": "unavailable"}
+
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        checked = await asyncio.gather(*(check(client, name, url) for name, url in MODEL_URLS.items()))
+    return dict(checked)
+
+
+def _severity(caries_data: dict[str, Any]) -> str:
+    ranks = {"advanced": 4, "moderate": 3, "mild": 2, "caries": 1}
+    labels = [str(item.get("severity", "")).strip().lower() for item in caries_data.get("caries", [])]
+    labels = [label for label in labels if label in ranks]
+    if not labels:
+        return "Not detected"
+    worst = max(labels, key=lambda label: ranks[label])
+    return {"advanced": "Advanced", "moderate": "Moderate", "mild": "Mild", "caries": "Present"}[worst]
+
+
+def fuse_results(models: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    caries_model = models.get("caries", {"status": "unavailable"})
+    tooth_model = models.get("tooth", {"status": "unavailable"})
+    gum_model = models.get("gingivitis", {"status": "unavailable"})
+
+    if caries_model.get("status") == "available":
+        caries_regions = caries_model["data"]["caries"]
+        caries_severity = _severity(caries_model["data"])
+        caries = {"status": "available", "found": len(caries_regions), "severity": caries_severity,
+                  "regions": caries_regions, "confidence": [x.get("confidence") for x in caries_regions]}
+    else:
+        caries_regions, caries_severity = [], "Check unavailable"
+        caries = {"status": "unavailable", "found": None, "severity": "Check unavailable", "regions": [], "confidence": []}
+
+    if tooth_model.get("status") == "available":
+        td = tooth_model["data"]
+        teeth = td["teeth"]
+        tooth_count = td.get("n_teeth", len(teeth))
+        tooth_breakdown = td.get("counts", {})
+        tooth = {"status": "available", "count": tooth_count, "breakdown": tooth_breakdown, "teeth": teeth}
+    else:
+        tooth_count, tooth_breakdown, teeth = None, None, []
+        tooth = {"status": "unavailable", "count": None, "breakdown": None, "teeth": []}
+
+    if gum_model.get("status") == "available":
+        gd = gum_model["data"]
+        regions = gd["regions"]
+        confidence = gd.get("max_confidence")
+        if confidence is None:
+            confidence = max((float(r.get("confidence", 0)) for r in regions), default=0.0)
+        found = bool(gd.get("gingivitis_detected", len(regions) > 0))
+        gingivitis = {"status": "available", "found": found, "confidence": confidence, "regions": regions}
+    else:
+        regions, confidence = [], None
+        gingivitis = {"status": "unavailable", "found": None, "confidence": None, "regions": []}
+
+    severity_key = caries_severity.lower()
+    if severity_key in ("moderate", "advanced") or (confidence is not None and confidence > 0.60):
+        risk = "high"
+    elif severity_key == "mild" or gingivitis.get("found") is True:
+        risk = "moderate"
+    elif any(m.get("status") != "available" for m in models.values()):
+        risk = "incomplete"
+    else:
+        risk = "low"
+
+    statements = []
+    if caries["status"] == "available":
+        statements.append(f"The caries model detected {caries['found']} possible region(s) ({caries_severity.lower()})." if caries["found"]
+                          else "The caries model did not detect a region above its screening threshold.")
+    else:
+        statements.append("The caries check was unavailable.")
+    if gingivitis["status"] == "available":
+        statements.append("The gingivitis model detected visual indicators associated with inflammation."
+                          if gingivitis["found"] else "The gingivitis model did not detect a region above its screening threshold.")
+    else:
+        statements.append("The gingivitis check was unavailable.")
+    if tooth["status"] == "available":
+        statements.append(f"The tooth model identified {tooth_count} tooth region(s).")
+    else:
+        statements.append("The tooth check was unavailable.")
+
+    return {"tooth_count": tooth_count, "tooth_breakdown": tooth_breakdown, "tooth": tooth,
+            "caries": caries, "gingivitis": gingivitis, "risk_level": risk,
+            "summary_text": " ".join(statements), "disclaimer": DISCLAIMER}
+
+
+def _annotate(image: np.ndarray, result: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    colors = {"caries": (30, 30, 220), "gingivitis": (0, 145, 255), "tooth": (210, 110, 30)}
+    specs = (("caries", result["caries"]["regions"], "severity"),
+             ("gingivitis", result["gingivitis"]["regions"], "gingivitis"),
+             ("tooth", result["tooth"]["teeth"], "type"))
+    height, width = image.shape[:2]
+    detections = {"caries": [], "gingivitis": [], "tooth": []}
+    for model, rows, label_key in specs:
+        if model == "caries" and result["caries"]["status"] != "available":
+            continue
+        if model == "gingivitis" and result["gingivitis"]["status"] != "available":
+            continue
+        if model == "tooth" and result["tooth"]["status"] != "available":
+            continue
+        for item in rows:
+            box = item.get("bbox", item.get("box"))
+            if not isinstance(box, (list, tuple)) or len(box) != 4:
+                continue
+            x0, y0, x1, y1 = [float(v) for v in box]
+            if max(abs(x0), abs(y0), abs(x1), abs(y1)) <= 1.5:
+                x0, x1, y0, y1 = x0 * width, x1 * width, y0 * height, y1 * height
+            x0, y0 = max(0, int(x0)), max(0, int(y0))
+            x1, y1 = min(width - 1, int(x1)), min(height - 1, int(y1))
+            if x1 <= x0 or y1 <= y0:
+                continue
+            label = str(item.get(label_key, model))
+            confidence = item.get("confidence")
+            text = f"{label} {float(confidence):.2f}" if isinstance(confidence, (float, int)) else label
+            thickness = 1 if model == "tooth" else 3
+            cv2.rectangle(image, (x0, y0), (x1, y1), colors[model], thickness, cv2.LINE_AA)
+            if model != "tooth":
+                cv2.putText(image, text[:48], (x0, max(18, y0 - 6)), cv2.FONT_HERSHEY_SIMPLEX,
+                            0.5, colors[model], 1, cv2.LINE_AA)
+            detections[model].append({"bbox": [x0, y0, x1, y1], "label": label, "confidence": confidence})
+    encoded = None
+    for quality in (82, 72, 62, 52, 42):
+        ok, candidate = cv2.imencode(".jpg", image, [cv2.IMWRITE_JPEG_QUALITY, quality])
+        if ok:
+            encoded = candidate
+            if len(candidate) <= 2_700_000:
+                break
+    if encoded is not None and len(encoded) > 2_700_000:
+        smaller = cv2.resize(image, None, fx=0.8, fy=0.8, interpolation=cv2.INTER_AREA)
+        ok, candidate = cv2.imencode(".jpg", smaller, [cv2.IMWRITE_JPEG_QUALITY, 55])
+        if ok:
+            encoded = candidate
+    if encoded is None:
+        raise HTTPException(500, "Could not prepare the screening image.")
+    return base64.b64encode(encoded.tobytes()).decode("ascii"), detections
+
+
+async def _owned_patient(db, patient_id: str, doctor_id: ObjectId):
+    patient = await db.patients.find_one({"patient_id": patient_id, "doctor_id": doctor_id})
+    if not patient:
+        raise HTTPException(404, "Patient not found.")
+    return patient
+
+
+@app.get("/api/health")
+async def health(request: Request):
+    models = await check_model_health()
+    return {"status": "ok", "database": "available" if request.app.state.db is not None else "unavailable",
+            "models": models, "email_configured": bool(os.getenv("EMAIL_HOST") or os.getenv("SMTP_HOST"))}
+
+
+@app.post("/api/patients")
+async def create_patient(body: PatientRegistration, doctor=Depends(current_doctor), db=Depends(get_db)):
+    name, email, phone = body.name.strip(), body.email.strip().lower(), body.phone.strip()
+    if not name or not _valid_email(email) or not re.fullmatch(r"[+()\d][+\d()\-\s]{5,23}", phone):
+        raise HTTPException(422, "Enter a valid name, phone number, and e-mail address.")
+    year = datetime.now(timezone.utc).year
+    counter = await db.counters.find_one_and_update({"_id": f"patient-{year}"}, {"$inc": {"value": 1}},
+                                                    upsert=True, return_document=ReturnDocument.AFTER)
+    patient = {"patient_id": f"DX-{year}-{counter['value']:05d}", "doctor_id": doctor["_id"],
+               "name": name, "age": body.age, "phone": phone, "email": email,
+               "created_at": datetime.now(timezone.utc)}
+    patient["_id"] = ObjectId()
+    await db.patients.insert_one(patient)
+    return {"id": str(patient["_id"]), **{k: v for k, v in patient.items() if k != "_id" and k != "doctor_id"}}
+
+
+@app.get("/api/patients")
+async def list_patients(search: str = "", doctor=Depends(current_doctor), db=Depends(get_db)):
+    query: dict[str, Any] = {"doctor_id": doctor["_id"]}
+    if search.strip():
+        pattern = re.escape(search.strip())
+        query["$or"] = [{"name": {"$regex": pattern, "$options": "i"}},
+                        {"patient_id": {"$regex": pattern, "$options": "i"}},
+                        {"phone": {"$regex": pattern}}, {"email": {"$regex": pattern, "$options": "i"}}]
+    items = await db.patients.find(query, {"doctor_id": 0}).sort("created_at", -1).limit(100).to_list(100)
+    return [{"id": str(x.pop("_id")), **x} for x in items]
+
+
+@app.get("/api/patients/{patient_id}/screenings")
+async def patient_history(patient_id: str, doctor=Depends(current_doctor), db=Depends(get_db)):
+    patient = await _owned_patient(db, patient_id, doctor["_id"])
+    items = await db.screenings.find({"doctor_id": doctor["_id"], "patient_id": patient_id},
+                                     {"annotated_image_b64": 0, "doctor_id": 0}).sort("created_at", -1).to_list(100)
+    return {"patient": {"patient_id": patient["patient_id"], "name": patient["name"], "age": patient["age"],
+                         "phone": patient["phone"], "email": patient["email"]},
+            "screenings": [{"id": str(x.pop("_id")), **x} for x in items]}
+
+
+@app.post("/api/screen")
+async def screen_patient(file: UploadFile = File(...), patient_id: str = Form(...),
+                         doctor=Depends(current_doctor), db=Depends(get_db)):
+    patient = await _owned_patient(db, patient_id, doctor["_id"])
+    data = await file.read(MAX_IMAGE_BYTES + 1)
+    if not data:
+        raise HTTPException(400, "Choose an image to screen.")
+    if len(data) > MAX_IMAGE_BYTES:
+        raise HTTPException(413, "Image must be 4 MB or smaller. Choose a smaller image.")
+    image = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
+    if image is None:
+        raise HTTPException(415, "The selected file is not a supported image.")
+    h, w = image.shape[:2]
+    if min(h, w) < 128:
+        raise HTTPException(422, "Image resolution is too low. Retake the photo closer to the teeth.")
+
+    model_results = await run_models(data, Path(file.filename or "photo.jpg").name)
+    fused = fuse_results(model_results)
+    annotated, detections = _annotate(image, fused)
+    now = datetime.now(timezone.utc)
+    screening = {"doctor_id": doctor["_id"], "patient_id": patient_id, "patient_name": patient["name"],
+                 "created_at": now, **fused, "detections": detections, "annotated_image_b64": annotated,
+                 "clinical_notes": "", "assessment": "", "reviewed": False,
+                 "report_generated": False, "report_emailed": False}
+    result = await db.screenings.insert_one(screening)
+    return {"id": str(result.inserted_id), "patient_id": patient_id, "patient_name": patient["name"],
+            "created_at": now.isoformat(), **fused, "detections": detections, "annotated_image_b64": annotated,
+            "model_status": {k: v["status"] for k, v in model_results.items()},
+            "image_size": {"width": w, "height": h}}
+
+
+@app.get("/api/screenings/{screening_id}")
+async def get_screening(screening_id: str, doctor=Depends(current_doctor), db=Depends(get_db)):
+    if not ObjectId.is_valid(screening_id):
+        raise HTTPException(404, "Screening not found.")
+    item = await db.screenings.find_one({"_id": ObjectId(screening_id), "doctor_id": doctor["_id"]})
+    if not item:
+        raise HTTPException(404, "Screening not found.")
+    item["id"] = str(item.pop("_id"))
+    item.pop("doctor_id", None)
+    return item
+
+
+@app.patch("/api/screenings/{screening_id}/review")
+async def save_review(screening_id: str, body: ReviewUpdate, doctor=Depends(current_doctor), db=Depends(get_db)):
+    allowed = {"", "No immediate concern", "Further examination required", "Treatment recommended", "Referral required"}
+    if not body.assessment or body.assessment not in allowed:
+        raise HTTPException(422, "Choose one of the listed assessments.")
+    if not ObjectId.is_valid(screening_id):
+        raise HTTPException(404, "Screening not found.")
+    updated = await db.screenings.find_one_and_update(
+        {"_id": ObjectId(screening_id), "doctor_id": doctor["_id"]},
+        {"$set": {"clinical_notes": body.clinical_notes.strip(), "assessment": body.assessment,
+                   "reviewed": True, "reviewed_at": datetime.now(timezone.utc)}},
+        return_document=ReturnDocument.AFTER)
+    if not updated:
+        raise HTTPException(404, "Screening not found.")
+    return {"ok": True, "reviewed": True}
+
+
+def _make_pdf(screening: dict[str, Any], patient: dict[str, Any], doctor: dict[str, Any]) -> bytes:
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.utils import ImageReader
+    from reportlab.pdfgen import canvas
+
+    out = io.BytesIO()
+    pdf = canvas.Canvas(out, pagesize=A4)
+    width, height = A4
+    pdf.setTitle("DentalX Camp screening report")
+    pdf.setFillColor(colors.HexColor("#14302B")); pdf.setFont("Helvetica-Bold", 18)
+    pdf.drawString(48, height - 52, os.getenv("CAMP_NAME", "DentalX Community Dental Camp"))
+    pdf.setFont("Helvetica", 10); pdf.setFillColor(colors.HexColor("#536965"))
+    pdf.drawString(48, height - 70, "AI-assisted dental screening report")
+    pdf.setFillColor(colors.HexColor({"high": "#C0392B", "moderate": "#E08A1E", "low": "#1E9E6A"}.get(screening.get("risk_level"), "#667085")))
+    pdf.roundRect(48, height - 112, 120, 26, 5, fill=1, stroke=0)
+    pdf.setFillColor(colors.white); pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(58, height - 103, f"RISK: {screening.get('risk_level', 'incomplete').upper()}")
+
+    y = height - 140
+    pdf.setFillColor(colors.HexColor("#182522")); pdf.setFont("Helvetica-Bold", 11)
+    for label, value in (("Doctor", doctor.get("name", "")), ("Patient", patient.get("name", "")),
+                         ("Patient ID", patient.get("patient_id", "")),
+                         ("Age / Phone / Email", f"{patient.get('age', '')} / {patient.get('phone', '')} / {patient.get('email', '')}"),
+                         ("Date", screening.get("created_at", datetime.now(timezone.utc)).strftime("%d %b %Y %H:%M UTC"))):
+        pdf.drawString(48, y, f"{label}:")
+        pdf.setFont("Helvetica", 10); pdf.drawString(150, y, str(value)[:100]); pdf.setFont("Helvetica-Bold", 11)
+        y -= 18
+    y -= 5
+    pdf.setFont("Helvetica-Bold", 12); pdf.drawString(48, y, "AI screening findings"); y -= 18
+    pdf.setFont("Helvetica", 10)
+    findings = [
+        f"Tooth model: {screening.get('tooth_count') if screening.get('tooth_count') is not None else 'Check unavailable'}",
+        "Tooth breakdown: " + (", ".join(f"{k}: {v}" for k, v in (screening.get("tooth_breakdown") or {}).items()) or "Not provided by model"),
+        f"Caries: {screening['caries'].get('found') if screening['caries']['status'] == 'available' else 'Check unavailable'} region(s); severity {screening['caries'].get('severity', 'Check unavailable')}",
+        "Gingivitis: " + ("Yes" if screening["gingivitis"].get("found") else "Not detected")
+        if screening["gingivitis"]["status"] == "available" else "Gingivitis: Check unavailable",
+        f"Summary: {screening.get('summary_text', '')}",
+        f"Doctor assessment: {screening.get('assessment') or 'Not recorded'}",
+        f"Clinical notes: {screening.get('clinical_notes') or 'Not recorded'}",
+    ]
+    gum_confidence = screening["gingivitis"].get("confidence")
+    findings.insert(4, f"Gingivitis confidence: {gum_confidence:.0%}" if gum_confidence is not None
+                    else "Gingivitis confidence: Not provided by model")
+    for line in findings:
+        for segment in [line[i:i + 105] for i in range(0, max(len(line), 1), 105)]:
+            pdf.drawString(48, y, segment); y -= 14
+    image_b64 = screening.get("annotated_image_b64")
+    if image_b64 and y > 190:
+        try:
+            raw = base64.b64decode(image_b64)
+            img = ImageReader(io.BytesIO(raw)); iw, ih = img.getSize()
+            boxw, boxh = 260, min(180, y - 30)
+            scale = min(boxw / iw, boxh / ih)
+            pdf.drawImage(img, 48, y - ih * scale, width=iw * scale, height=ih * scale, preserveAspectRatio=True)
+            y -= ih * scale + 12
+        except Exception:
+            pass
+    pdf.setFillColor(colors.HexColor("#536965")); pdf.setFont("Helvetica-Oblique", 8)
+    pdf.drawString(48, 38, DISCLAIMER)
+    pdf.save()
+    return out.getvalue()
+
+
+async def _load_owned_screening(screening_id: str, doctor, db):
+    if not ObjectId.is_valid(screening_id):
+        raise HTTPException(404, "Screening not found.")
+    screening = await db.screenings.find_one({"_id": ObjectId(screening_id), "doctor_id": doctor["_id"]})
+    if not screening:
+        raise HTTPException(404, "Screening not found.")
+    patient = await _owned_patient(db, screening["patient_id"], doctor["_id"])
+    return screening, patient
+
+
+@app.get("/api/screenings/{screening_id}/report.pdf")
+async def download_report(screening_id: str, doctor=Depends(current_doctor), db=Depends(get_db)):
+    screening, patient = await _load_owned_screening(screening_id, doctor, db)
+    if not screening.get("reviewed"):
+        raise HTTPException(409, "Save the doctor review before generating a report.")
+    pdf_bytes = _make_pdf(screening, patient, doctor)
+    now = datetime.now(timezone.utc)
+    await db.reports.update_one({"doctor_id": doctor["_id"], "screening_id": screening["_id"]},
+                                {"$set": {"generated_at": now}, "$setOnInsert": {"emailed": False}}, upsert=True)
+    await db.screenings.update_one({"_id": screening["_id"]}, {"$set": {"report_generated": True}})
+    return Response(pdf_bytes, media_type="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="DentalX_{screening["patient_id"]}.pdf"'})
+
+
+def _send_email(to: str, subject: str, content: str, attachment: bytes, filename: str):
+    host = os.getenv("EMAIL_HOST") or os.getenv("SMTP_HOST")
+    port = int(os.getenv("EMAIL_PORT") or os.getenv("SMTP_PORT", "587"))
+    username = os.getenv("EMAIL_USERNAME") or os.getenv("SMTP_USER", "")
+    password = os.getenv("EMAIL_PASSWORD") or os.getenv("SMTP_PASS", "")
+    sender = os.getenv("EMAIL_FROM") or os.getenv("SMTP_FROM") or username
+    message = EmailMessage()
+    message["Subject"], message["From"], message["To"] = subject, sender, to
+    message.set_content(content)
+    message.add_attachment(attachment, maintype="application", subtype="pdf", filename=filename)
+    if port == 465:
+        with smtplib.SMTP_SSL(host, port, timeout=20, context=ssl.create_default_context()) as smtp:
+            if username:
+                smtp.login(username, password)
+            smtp.send_message(message)
+    else:
+        with smtplib.SMTP(host, port, timeout=20) as smtp:
+            smtp.starttls(context=ssl.create_default_context())
+            if username:
+                smtp.login(username, password)
+            smtp.send_message(message)
+
+
+@app.post("/api/screenings/{screening_id}/email")
+async def email_report(screening_id: str, doctor=Depends(current_doctor), db=Depends(get_db)):
+    if not (os.getenv("EMAIL_HOST") or os.getenv("SMTP_HOST")):
+        raise HTTPException(503, "Email service is not configured.")
+    screening, patient = await _load_owned_screening(screening_id, doctor, db)
+    if not screening.get("reviewed"):
+        raise HTTPException(409, "Save the doctor review before e-mailing a report.")
+    if not patient.get("email"):
+        raise HTTPException(422, "This patient does not have an e-mail address on file.")
+    pdf_bytes = _make_pdf(screening, patient, doctor)
+    filename = f"DentalX_{screening['patient_id']}.pdf"
+    try:
+        await asyncio.to_thread(_send_email, patient["email"], "DentalX Camp screening report",
+                                f"Attached is your AI-assisted screening report.\n\n{DISCLAIMER}", pdf_bytes, filename)
+    except Exception as exc:
+        log.warning("Report e-mail failed (%s)", type(exc).__name__)
+        raise HTTPException(502, "Could not send the report e-mail. Please try again.") from exc
+    now = datetime.now(timezone.utc)
+    await db.reports.update_one({"doctor_id": doctor["_id"], "screening_id": screening["_id"]},
+                                {"$set": {"generated_at": now, "emailed": True, "emailed_at": now}}, upsert=True)
+    await db.screenings.update_one({"_id": screening["_id"]}, {"$set": {"report_generated": True, "report_emailed": True}})
+    return {"ok": True, "status": "Report sent."}
+
+
+@app.get("/api/queue")
+async def queue(doctor=Depends(current_doctor), db=Depends(get_db)):
+    items = await db.screenings.find({"doctor_id": doctor["_id"]}, {"annotated_image_b64": 0, "doctor_id": 0}).sort("created_at", -1).limit(200).to_list(200)
+    risk_order = {"high": 0, "moderate": 1, "incomplete": 2, "low": 3}
+    items.sort(key=lambda x: (risk_order.get(x.get("risk_level"), 4), -x.get("created_at", datetime.min.replace(tzinfo=timezone.utc)).timestamp()))
+    return [{"id": str(x.pop("_id")), **x} for x in items]
+
+
+@app.get("/api/stats")
+async def stats(doctor=Depends(current_doctor), db=Depends(get_db)):
+    screenings = await db.screenings.find({"doctor_id": doctor["_id"]}, {"risk_level": 1, "caries": 1, "gingivitis": 1, "created_at": 1}).to_list(10000)
+    patients = await db.patients.count_documents({"doctor_id": doctor["_id"]})
+    today = datetime.now(timezone.utc).date()
+    today_items = [x for x in screenings if x.get("created_at") and x["created_at"].date() == today]
+    risk = {name: sum(x.get("risk_level") == name for x in screenings) for name in ("low", "moderate", "high")}
+    risk_today = {name: sum(x.get("risk_level") == name for x in today_items) for name in ("low", "moderate", "high")}
+    reports = await db.reports.find({"doctor_id": doctor["_id"]}, {"emailed": 1}).to_list(10000)
+    return {"total_patients": patients, "total_screenings": len(screenings), "screened_today": len(today_items), "risk": risk, "risk_today": risk_today,
+            "caries_detected": sum(x.get("caries", {}).get("found", 0) not in (0, None) for x in screenings),
+            "gingivitis_detected": sum(x.get("gingivitis", {}).get("found") is True for x in screenings),
+            "reports_generated": len(reports), "reports_sent": sum(x.get("emailed") is True for x in reports)}
+
+
+@app.get("/api/export.csv")
+async def export_csv(doctor=Depends(current_doctor), db=Depends(get_db)):
+    items = await db.screenings.find({"doctor_id": doctor["_id"]}, {"annotated_image_b64": 0}).sort("created_at", -1).to_list(10000)
+    stream = io.StringIO()
+    writer = csv.writer(stream)
+    writer.writerow(["screening_id", "patient_id", "patient_name", "date", "risk", "caries_count", "caries_severity",
+                     "gingivitis", "gingivitis_confidence", "clinical_notes", "assessment"])
+    for item in items:
+        gum = item.get("gingivitis", {})
+        caries = item.get("caries", {})
+        writer.writerow([str(item["_id"]), item.get("patient_id"), item.get("patient_name"), item.get("created_at"),
+                         item.get("risk_level"), caries.get("found"), caries.get("severity"), gum.get("found"),
+                         gum.get("confidence"), item.get("clinical_notes"), item.get("assessment")])
+    return StreamingResponse(iter([stream.getvalue()]), media_type="text/csv",
+                             headers={"Content-Disposition": "attachment; filename=dentalx_screenings.csv"})
+
+
+CLIENT_DIST = ROOT / "client" / "dist"
+ASSETS = CLIENT_DIST / "assets"
+if ASSETS.is_dir():
+    app.mount("/assets", StaticFiles(directory=ASSETS), name="assets")
+
+
+@app.get("/", include_in_schema=False)
+async def frontend_index():
+    index = CLIENT_DIST / "index.html"
+    if not index.exists():
+        return JSONResponse({"message": "DentalX Camp API is ready. Build the React client to serve the app."})
+    return FileResponse(index)
+
+
+@app.get("/{path:path}", include_in_schema=False)
+async def frontend_routes(path: str):
+    if path.startswith("api/"):
+        raise HTTPException(404, "Not found.")
+    index = CLIENT_DIST / "index.html"
+    if not index.exists():
+        raise HTTPException(404, "Not found.")
+    return FileResponse(index)

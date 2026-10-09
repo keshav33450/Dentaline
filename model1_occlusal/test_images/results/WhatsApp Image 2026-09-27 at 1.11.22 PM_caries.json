@@ -11,201 +11,26 @@
    "specular_fraction": 0.002
   }
  },
- "teeth_found": 15,
- "caries": [
-  {
-   "severity": "moderate",
-   "box": [
-    748.7,
-    509.1,
-    875.2,
-    619.6
-   ],
-   "confidence": 0.807,
-   "status": "likely",
-   "display": "Moderate caries - 81%"
-  },
-  {
-   "severity": "moderate",
-   "box": [
-    292.7,
-    351.5,
-    394.8,
-    463.0
-   ],
-   "confidence": 0.76,
-   "status": "likely",
-   "display": "Moderate caries - 76%"
-  },
-  {
-   "severity": "moderate",
-   "box": [
-    728.4,
-    409.1,
-    827.2,
-    522.6
-   ],
-   "confidence": 0.687,
-   "status": "likely",
-   "display": "Moderate caries - 69%"
-  }
- ],
- "sound_teeth": [
-  {
-   "severity": "no_caries",
-   "box": [
-    540.1,
-    296.6,
-    621.1,
-    386.4
-   ],
-   "confidence": 0.835,
-   "status": "likely",
-   "display": "No caries - 84%"
-  },
-  {
-   "severity": "no_caries",
-   "box": [
-    617.0,
-    306.0,
-    707.7,
-    400.5
-   ],
-   "confidence": 0.829,
-   "status": "likely",
-   "display": "No caries - 83%"
-  },
-  {
-   "severity": "no_caries",
-   "box": [
-    407.9,
-    315.4,
-    503.8,
-    416.9
-   ],
-   "confidence": 0.822,
-   "status": "likely",
-   "display": "No caries - 82%"
-  },
-  {
-   "severity": "no_caries",
-   "box": [
-    691.6,
-    327.2,
-    782.1,
-    433.5
-   ],
-   "confidence": 0.82,
-   "status": "likely",
-   "display": "No caries - 82%"
-  },
-  {
-   "severity": "no_caries",
-   "box": [
-    211.8,
-    542.4,
-    371.2,
-    707.0
-   ],
-   "confidence": 0.802,
-   "status": "likely",
-   "display": "No caries - 80%"
-  },
-  {
-   "severity": "no_caries",
-   "box": [
-    279.9,
-    462.8,
-    399.8,
-    568.7
-   ],
-   "confidence": 0.783,
-   "status": "likely",
-   "display": "No caries - 78%"
-  },
-  {
-   "severity": "no_caries",
-   "box": [
-    765.0,
-    604.3,
-    912.9,
-    773.8
-   ],
-   "confidence": 0.752,
-   "status": "likely",
-   "display": "No caries - 75%"
-  },
-  {
-   "severity": "no_caries",
-   "box": [
-    463.3,
-    272.9,
-    555.2,
-    351.9
-   ],
-   "confidence": 0.748,
-   "status": "likely",
-   "display": "No caries - 75%"
-  },
-  {
-   "severity": "no_caries",
-   "box": [
-    349.2,
-    273.3,
-    432.4,
-    377.2
-   ],
-   "confidence": 0.744,
-   "status": "likely",
-   "display": "No caries - 74%"
-  },
-  {
-   "severity": "no_caries",
-   "box": [
-    805.4,
-    875.0,
-    934.7,
-    961.3
-   ],
-   "confidence": 0.741,
-   "status": "likely",
-   "display": "No caries - 74%"
-  },
-  {
-   "severity": "no_caries",
-   "box": [
-    790.6,
-    768.0,
-    923.4,
-    889.6
-   ],
-   "confidence": 0.676,
-   "status": "likely",
-   "display": "No caries - 68%"
-  },
-  {
-   "severity": "no_caries",
-   "box": [
-    169.4,
-    698.4,
-    320.1,
-    841.8
-   ],
-   "confidence": 0.612,
-   "status": "likely",
-   "display": "No caries - 61%"
-  }
- ],
+ "teeth_found": 0,
+ "mode": "caries+severity",
+ "caries": [],
+ "sound_teeth": [],
  "summary": {
-  "no_caries": 12,
+  "no_caries": 0,
   "mild": 0,
-  "moderate": 3,
-  "advanced": 0
+  "moderate": 0,
+  "advanced": 0,
+  "caries": 0
  },
- "highest": "Moderate caries - 81%",
+ "highest": "No caries detected",
  "settings": {
   "hidden_below": 0.3,
-  "likely_from": 0.5
+  "likely_from": 0.5,
+  "imgsz": 1024
  },
+ "image_size": [
+  1179,
+  1090
+ ],
  "disclaimer": "AI screening aid - not a diagnosis. Confirm clinically (ICDAS)."
 }

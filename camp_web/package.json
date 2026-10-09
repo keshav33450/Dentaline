@@ -1,0 +1,16 @@
+{
+  "name": "dentalx-camp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DentalX Camp — MERN screening & triage app over three local dental-vision models",
+  "scripts": {
+    "install:all": "cd server && npm install && cd ../client && npm install",
+    "build": "cd client && npm run build",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "start": "cd server && npm start"
+  },
+  "dependencies": {
+    "puppeteer": "^25.12.0"
+  }
+}

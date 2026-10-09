@@ -1,0 +1,21 @@
+# DentalX — combined requirements for Python 3.13 (prebuilt wheels, no compiler needed).
+# Install with:  pip install -r requirements-py313.txt --extra-index-url https://download.pytorch.org/whl/cpu
+
+# --- CPU-only PyTorch (3.13 wheels) ---
+torch>=2.6
+torchvision>=0.21
+
+# --- models (YOLO inference) ---
+ultralytics>=8.3.0
+opencv-python-headless>=4.8,<4.12
+numpy>=2.1,<3
+
+# --- camp_web backend ---
+fastapi>=0.115,<1
+uvicorn[standard]>=0.34,<1
+httpx>=0.27,<1
+pymongo[srv]>=4.13,<5
+python-multipart>=0.0.9,<1
+python-dotenv>=1,<2
+reportlab>=4.2,<5
+pytest>=8,<9

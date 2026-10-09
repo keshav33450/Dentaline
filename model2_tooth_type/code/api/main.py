@@ -1,16 +1,18 @@
 """Minimal FastAPI wrapper for Model 2 (tooth-type detection).
 
-  pip install fastapi uvicorn python-multipart
   uvicorn api.main:app --host 127.0.0.1 --port 8002
   POST /analyze  (multipart: file=<intraoral photo>)  -> JSON {n_teeth, counts, teeth[]}
 """
 from __future__ import annotations
 
 import importlib.util
-import tempfile
+import hmac
+import os
 from pathlib import Path
 
-from fastapi import FastAPI, File, UploadFile
+import cv2
+import numpy as np
+from fastapi import FastAPI, File, Header, HTTPException, Query, UploadFile
 
 _spec = importlib.util.spec_from_file_location(
     "analyze", str(Path(__file__).resolve().parents[1] / "scripts" / "analyze.py"))
@@ -18,17 +20,35 @@ _an = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_an)
 
 app = FastAPI(title="DentalX Model 2 - Tooth Type")
+_API_KEY = os.getenv("MODEL_API_KEY", "")
+
+
+def _authorize(authorization: str | None):
+    if _API_KEY and not hmac.compare_digest(authorization or "", f"Bearer {_API_KEY}"):
+        raise HTTPException(401, "missing or invalid bearer token", headers={"WWW-Authenticate": "Bearer"})
+
+
+def _decode(data: bytes):
+    img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
+    if img is None:
+        raise HTTPException(400, "cannot read image")
+    return img
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "model": _an.LOCAL_MODEL_ID}
+    wp = Path(_an.DEFAULT_WEIGHTS)
+    if not wp.exists():
+        raise HTTPException(503, f"no local weights at {wp}")
+    return {"status": "ok", "model": wp.name, "backend": "weights"}
 
 
 @app.post("/analyze")
-async def analyze(file: UploadFile = File(...), backend: str = "local", conf: float = 0.4):
-    with tempfile.NamedTemporaryFile(suffix=Path(file.filename or "x.jpg").suffix, delete=False) as tf:
-        tf.write(await file.read())
-        tmp = tf.name
-    _, res = _an.run(tmp, backend=backend, conf=conf)
+async def analyze(file: UploadFile = File(...), conf: float = Query(0.4, ge=0.0, le=1.0),
+                  authorization: str | None = Header(default=None)):
+    _authorize(authorization)
+    if not Path(_an.DEFAULT_WEIGHTS).exists():
+        raise HTTPException(503, f"no local weights at {_an.DEFAULT_WEIGHTS}")
+    img = _decode(await file.read())
+    _, res = _an.run(backend="weights", conf=conf, image_bgr=img)
     return res

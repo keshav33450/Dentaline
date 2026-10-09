@@ -1,0 +1,95 @@
+"""Model 1 - occlusal caries API.
+
+  uvicorn api.main:app --host 127.0.0.1 --port 8001
+  POST /analyze  (multipart: file=<occlusal photo>)  -> caries JSON
+"""
+from __future__ import annotations
+
+import importlib.util
+import hmac
+import os
+import sys
+from pathlib import Path
+
+os.environ.setdefault("YOLO_AUTOINSTALL", "false")
+import cv2
+import numpy as np
+from fastapi import FastAPI, File, Header, HTTPException, Query, UploadFile
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from dentassist import paths as P  # noqa: E402
+
+_spec = importlib.util.spec_from_file_location(
+    "occ_detect", str(Path(__file__).resolve().parents[1] / "scripts" / "occ_detect.py"))
+_occ = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_occ)
+
+_DET = None
+_SEV = None
+_DET_PATH = None
+_API_KEY = os.getenv("MODEL_API_KEY", "")
+
+
+def _authorize(authorization: str | None):
+    if _API_KEY and not hmac.compare_digest(authorization or "", f"Bearer {_API_KEY}"):
+        raise HTTPException(401, "missing or invalid bearer token", headers={"WWW-Authenticate": "Bearer"})
+
+
+def _find_det():
+    for p in (P.WEIGHTS / "occlusal_caries_det.pt", P.WEIGHTS / "occlusal_det.pt", P.WEIGHTS / "best.pt"):
+        if p.exists():
+            return p
+    return None
+
+
+def _find_sev(det_path):
+    for p in (P.WEIGHTS / "occlusal_severity.pt", P.WEIGHTS / "occlusal_severity_efficientnet_b0.pt"):
+        if p.exists() and (det_path is None or p.resolve() != det_path.resolve()):
+            return p
+    return None
+
+
+def _models():
+    global _DET, _SEV, _DET_PATH
+    if _DET is None:
+        _DET_PATH = _find_det()
+        if _DET_PATH is None:
+            return None, None
+        from ultralytics import YOLO
+        _DET = YOLO(str(_DET_PATH))
+        sp = _find_sev(_DET_PATH)
+        if sp is not None:
+            from dentassist.occlusal.classifier import Classifier
+            _SEV = Classifier(str(sp))
+    return _DET, _SEV
+
+
+def _decode(data: bytes):
+    img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
+    if img is None:
+        raise HTTPException(400, "cannot read image")
+    return img
+
+
+app = FastAPI(title="DentalX Model 1 - Occlusal Caries")
+
+
+@app.get("/health")
+def health():
+    p = _find_det()
+    if p is None:
+        raise HTTPException(503, f"no caries weights in {P.WEIGHTS}")
+    return {"status": "ok", "model": p.name}
+
+
+@app.post("/analyze")
+async def analyze(file: UploadFile = File(...), floor: float = Query(0.30, ge=0.0, le=1.0),
+                  likely: float = Query(0.50, ge=0.0, le=1.0),
+                  authorization: str | None = Header(default=None)):
+    _authorize(authorization)
+    det, sev = _models()
+    if det is None:
+        raise HTTPException(503, f"no caries weights in {P.WEIGHTS}")
+    raw = _decode(await file.read())
+    _, res = _occ.analyze(det, raw, floor, likely, None, sev_model=sev)
+    return res
