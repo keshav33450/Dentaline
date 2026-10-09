@@ -106,6 +106,47 @@ source data cap mAP@50-95 (0.369). Full numbers and epoch-by-epoch logs in `TRAI
 
 ---
 
+## Per-class / per-component breakdown
+
+All figures below are the **real** values from each model's `outputs/metrics.json` and
+`summary.json` — nothing is estimated.
+
+**Model 1 — Caries severity (classifier) · dataset = 1,882 photos / 22,824 annotated regions**
+
+ICDAS 0–6 mapped to 4 severity classes. Region (lesion-crop) counts per class:
+
+| Severity class | Regions (images) | ICDAS codes |
+|----------------|------------------|-------------|
+| no_caries | 14,562 | 0 (sound) |
+| mild | 3,211 | 1–2 (faint / distinct enamel change) |
+| moderate | 2,103 | 3–4 (enamel breakdown / dark shadow) |
+| advanced | 2,948 | 5–6 (distinct / extensive cavity) |
+
+Caries **detector** (separate stage): 1,956 photos · 5,923 permanent-caries boxes · 274 patient groups ·
+split train 1,885 / val 36 / test 35. External validation: 35 photos / 125 lesions → sensitivity **1.00**.
+
+**Model 2 — Tooth type · test = 134 images / 2,243 teeth (instances)**
+
+| Class | mAP@50 | mAP@50-95 | Precision | Recall |
+|-------|--------|-----------|-----------|--------|
+| incisor | 0.973 | 0.683 | 0.986 | 0.940 |
+| canine | 0.951 | 0.673 | 0.950 | 0.923 |
+| premolar | 0.944 | 0.666 | 0.947 | 0.910 |
+| molar | 0.915 | 0.644 | 0.927 | 0.880 |
+| **overall** | **0.946** | **0.666** | **0.953** | **0.913** |
+
+Per-view (view-robustness): frontal 42 imgs (0.949) · upper 45 imgs (0.947) · lower 47 imgs (0.945).
+
+**Model 3 — Gingivitis (single class) · 571 images / 1,508 boxes**
+
+| Class | Images | Boxes | mAP@50 | mAP@50-95 | Precision | Recall |
+|-------|--------|-------|--------|-----------|-----------|--------|
+| gingivitis | 571 | 1,508 | 0.804 | 0.369 | 0.784 | 0.729 |
+
+Split: train 480 / valid 46 / test 45 (best epoch 99/120, figures on the held-out validation split).
+
+---
+
 ## Evaluation Metrics
 
 - **mAP@50 / mAP@50-95** — detection accuracy at IoU 0.50 and averaged 0.50–0.95.
